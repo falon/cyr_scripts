@@ -19,7 +19,7 @@ $usage .= "\tmove <foldernow> of <user_now> in <foldernew> of <user_new>\n";
 $usage .= "\tinto new partition <part>\n\n";
 $usage .= "\t $0 -file <file>\n";
 $usage .= "\tread a file with lines in the form <user_now>,<foldernow>,<user_new>,<foldernew>,<part>\n";
-$usage .= "\t<part> can be the empty char if you don't want to change the partition.\n";
+$usage .= "\t<part> can be the empty or null char if you don't want to change the partition.\n";
 $usage .= "\tie\n\t\tmbox1,folder1,mbox2,folder2,\n\n";
 
 my $auth = {
