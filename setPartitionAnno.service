@@ -1,0 +1,18 @@
+[Unit]
+Description=Cyrus Partition Manager Agent
+After=syslog.target network.target cyrus-imapd.service
+OnFailure=status-email-sysadmin@%n.service
+
+
+[Service]
+Type=forking
+User=cyrus
+Group=mail
+PIDFile=/run/cyr_setPartitionAnno/setPartitionAnno.pid
+ExecStart=/usr/local/cyr_scripts/cyr_setPartitionAnno.pl -d
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -TERM $MAINPID
+KillMode=none
+
+[Install]
+WantedBy=cyrus-imapd.service

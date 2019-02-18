@@ -1,0 +1,20 @@
+#!/bin/bash
+HOMEDIR=/usr/local/cyr_scripts
+usage() {
+	echo -en "\n\e[33mThis is a shortcut to interface with cyradm.\n Usage $0 <servername>\e[39m\n\n";
+	exit 1
+}
+
+SERVER=$1
+[ "$#" -eq 1 ] || {
+	echo -en "\n1 argument required, with server name where to connect, $# provided.\n\e[33mAssuming localhost as server\e[39m.\n\n";
+	SERVER=localhost;
+}
+
+if [ "$1" == '--help' ] || [ "$1" == '-h' ] || [ "$1" == 'help' ]; then
+	usage;
+	exit 1;
+fi
+USER=`grep 'our $cyrus_user' $HOMEDIR/core.pl  | awk -F \" '{print $2}'`
+echo -en "\nConnecting to server <\e[33m$SERVER\e[39m> with user <\e[33m$USER\e[39m>...\n"
+/usr/bin/cyradm -u $USER $SERVER

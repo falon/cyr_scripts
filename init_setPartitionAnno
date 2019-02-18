@@ -1,0 +1,116 @@
+#!/bin/bash
+#
+# setPartitionAnno This starts and stops setPartitionAnno
+#
+# chkconfig: 2345 70 30
+# description: setPartitionAnno is the Cyrus Partition Manager.
+#		in chkconfig start after cyrus and end before.
+#		Normal Cyrus priority are  65 35.
+#		This script is provided only for compatibility
+#		with old system V OS.
+#		DO NOT use on systemd based OS. Use service file
+#		instead (setPartitionAnno.service).
+# processname: setPartitionAnno
+# pidfile: /var/run/setPartitionAnno.pid
+### BEGIN INIT INFO
+# Provides: $setPartitionAnno
+### END INIT INFO
+
+# Source function library.
+. /etc/init.d/functions
+
+binary="/usr/local/cyr_scripts/cyr_setPartitionAnno.pl"
+name="cyr_setPartitionAnno.pl"
+PIDFILE="/var/run/cyr_setPartitionAnno/setPartitionAnno.pid"
+[ -x $binary ] || exit 0
+
+RETVAL=0
+
+is_running() {
+  RUNNING=1
+  if [ -f $PIDFILE ]; then
+    read SPA_PID < $PIDFILE
+    if [ -n "$SPA_PID" ]; then
+      ps -p $SPA_PID > /dev/null 2>&1
+      RUNNING=$?
+    fi
+  fi
+  return $RUNNING
+}
+
+
+start() {
+    if ! is_running; then
+    	echo -n "Starting $name: "
+    	daemon $binary -d
+    	RETVAL=$?
+    	PID=$!
+#       echo $PID > $PIDFILE
+    	echo
+    	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$name
+    else
+        echo -n $"$name already running."
+	echo
+	status $binary
+        RETVAL=-1
+        echo
+    fi
+
+}
+
+stop() {
+    echo -n "Shutting down $name: "
+    killproc $name
+    RETVAL=$?
+    echo
+    if [ $RETVAL -eq 0 ]; then
+        rm -f /var/lock/subsys/$name
+        rm -f $PIDFILE
+    fi
+}
+
+restart() {
+    echo -n "Restarting $name: "
+    stop
+    sleep 2
+    start
+}
+
+reload() {
+	if ! is_running; then
+        	echo -n $"$name not running."
+                RETVAL=-1
+                echo
+        else
+                echo -n $"Reloading $name: "
+		killproc -p $PIDFILE $binary -HUP
+                RETVAL=$?
+                echo
+        fi
+        return $RETVAL
+}
+
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    status)
+        status $binary
+	RETVAL=$?
+    ;;
+    restart)
+        restart
+    ;;
+    reload)
+	reload
+    ;;
+    *)
+        echo "Usage: $0 {start|stop|status|reload|restart}"
+    ;;
+esac
+
+exit 0
