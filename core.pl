@@ -441,7 +441,11 @@ sub setQuota {
 	$return=0;
   } else {
         $sev='LOG_WARNING';
-        $error='';
+	if ($before[0] ne $mailbox) {
+		$error = "$folder is now a new Quota Root!";
+	} else {
+        	$error='';
+	}
         $status='success';
         $return=1;
   }
