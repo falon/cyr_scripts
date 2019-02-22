@@ -16,7 +16,7 @@ my $verbose = 1;
 my $usage  = "\nUsage:\t$0 -u <user> <folder> <quota> MB\n";
 $usage .= "\n\n";
 $usage .= "\t $0 -f <file>\n";
-$usage .= "\tread a file with lines in the form <user>,<folder>,<quota> MB\n\n";
+$usage .= "\tread a file with lines in the form <user>;<folder>;<quota> MB\n\n";
 $usage .= "The folder MUST be a quotaroot, otherwise it become a new quotaroot!\n\n";
 
 my @user = undef;
@@ -49,7 +49,7 @@ if (($#ARGV < 1) || ($#ARGV > 3)) {
 		foreach $line (@raw_data)
 		{
 			chomp($line);
-			@PARAM=split(/\,/,$line,2);
+			@PARAM=split(/\;/,$line,2);
 			if ($#PARAM != 2) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
 			else {
 				($user[$i],$folder[$i],$quota[$i])=@PARAM; 

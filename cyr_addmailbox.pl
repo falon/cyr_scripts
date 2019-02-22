@@ -24,7 +24,7 @@
 
 my $usage  = "\nUsage:\t$0 -u <user> <partition> <quota>\n";
 $usage .= "\t $0 -f <file>\n";
-$usage .= "\t read a file with lines in the form <user> <partition> <quota>.\n";
+$usage .= "\t read a file with lines in the form <user>;<partition>;<quota>.\n";
 $usage .= "\tThis is like cyr_adduser.pl, but it create the INBOX only folder.\n";
 $usage .= "Please, add the LDAP entry before.\n\n";
 
@@ -88,7 +88,7 @@ my $cyrus;
                 foreach $line (@raw_data)
                 {
                         chomp($line);
-                        @PARAM=split(/\s+/,$line,3);
+                        @PARAM=split(/\;/,$line,3);
                         if ($#PARAM != 2) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
                         else {
                                 ($newuser[$i],$partition[$i],$quota_size[$i])=@PARAM;

@@ -3,7 +3,7 @@
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
 #### Widely conf option ####
-our $build = '0.1.1 - 15 Feb 2019';
+our $build = '0.1.2 - 22 Feb 2019';
 our $sep = '/';
 our $cyrus_server = "localhost";
 our $cyrus_user = "cyrusadmin";
@@ -643,8 +643,8 @@ sub prepareXferDomain {
 	open (FILE, ">xfer_$domain");
         for ( $i = 0 ; $i < $nret ; $i++ ) {
 		my $entry = $mesg->entry ( $i );
-		if ($part ne '') {print FILE $entry->get_value( 'uid' )."\t$destServer\t$part\n";}
-		else {print FILE $entry->get_value( 'uid' )."\t$destServer\n";}
+		if ($part ne '') {print FILE $entry->get_value( 'uid' ).";$destServer;$part\n";}
+		else {print FILE $entry->get_value( 'uid' ).";$destServer\n";}
 	}
 	close (FILE);
 	printLog('LOG_INFO', "action=writefile status=success origMailHost=$origServer mailHost=$destServer part=$part detail=\"File xfer_$domain saved\"",$v);

@@ -25,7 +25,7 @@ my $ldapBase	= 'cn=en';	# Base dn containing whole domains
 my $ldapBindUid	= 'uid=admin,cn=en';
 my $ldapBindPwd	= 'ldapassword';
 # Orig Cyrus Server
-my $origServer	= 'imap..example.com'; 			# Cyrus server where relocating from
+my $origServer	= 'imap.example.com'; 			# Cyrus server where relocating from
 # OPEN-XCHANGE
 my $noproxy = ('example.com');
 my $netloc = 'apiOX.example.com:80';
@@ -43,9 +43,9 @@ my $usage  = "\nUsage:\t$0 -u <user> <destServer> [part]\n";
 $usage .= "\ttransfer <user> in <destServer>\n";
 $usage .= "\tinto new partition <part>. User will be removed from origin server.\n\n";
 $usage .= "\t $0 -f <file>\n";
-$usage .= "\tread a file with lines in the form <user> <destServer> [<part>]\n\n";
+$usage .= "\tread a file with lines in the form <user>;<destServer>[;<part>]\n\n";
 $usage .= "\t $0 -d <domain> <destServer> [part]\n";
-$usage .= "\tprepare a file named xfer_<domain> with lines in the form <user> <destServer> [<part>] for you. No change to systems.\n\n";
+$usage .= "\tprepare a file named xfer_<domain> with lines in the form <user>;<destServer>;[<part>] for you. No change to systems.\n\n";
 
 my @old = undef;
 my @new = undef;
@@ -84,7 +84,7 @@ if (($#ARGV < 1) || ($#ARGV > 3)) {
 		foreach $line (@raw_data)
 		{
 			chomp($line);
-			@PARAM=split(/\s+/,$line,3);
+			@PARAM=split(/\;/,$line,3);
 			if (($#PARAM <1) || ($#PARAM >2)) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
 			else { if ($#PARAM == 2) {
 				($user[$i],$destServer[$i],$part[$i])=@PARAM; }

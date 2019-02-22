@@ -19,7 +19,7 @@
 
 my $usage  = "\nUsage:\t$0 -u <mailbox> -folder <folder> -uid <user> -right <right>\n";
 $usage .= "\t $0 -file <file>\n";
-$usage .= "\t read a file with lines in the form <mailbox> <folder> <user> <right>.\n\n";
+$usage .= "\t read a file with lines in the form <mailbox>;<folder>;<user>;<right>.\n\n";
 
 
 require "/usr/local/cyr_scripts/core.pl";
@@ -106,7 +106,7 @@ if (! defined($ARGV[0]) ) {
                 foreach $line (@raw_data)
                 {
                         chomp($line);
-                        @PARAM=split(/\,/,$line,4);
+                        @PARAM=split(/\;/,$line,4);
                         if ($#PARAM != 3) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
                         else {
                                 ($mailbox[$i],$fdr,$who[$i],$right[$i])=@PARAM;

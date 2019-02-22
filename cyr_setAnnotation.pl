@@ -13,7 +13,7 @@
 
 my $usage  = "\nUsage:\t$0 -u <user> <folder> <anno> <value>\n";
 $usage .= "\t $0 -f <file>\n";
-$usage .= "\t read a file with lines in the form <user> <folder> <anno> <value>\n\n";
+$usage .= "\t read a file with lines in the form <user>;<folder>;<anno>;<value>\n\n";
 
 if (($#ARGV < 1) || ($#ARGV > 4)) {
         print $usage;
@@ -77,7 +77,7 @@ my $cyrus;
                 foreach $line (@raw_data)
                 {
                         chomp($line);
-                        @PARAM=split(/\s+/,$line,4);
+                        @PARAM=split(/\;/,$line,4);
                         if ($#PARAM != 3) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
                         else {
                                 ($newuser[$i],$folder[$i],$anno[$i],$value[$i])=@PARAM;

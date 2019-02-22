@@ -18,9 +18,9 @@ my $usage  = "\nUsage:\t$0 -mboxold <user_now> -folderold <foldernow> -mboxnew <
 $usage .= "\tmove <foldernow> of <user_now> in <foldernew> of <user_new>\n";
 $usage .= "\tinto new partition <part>\n\n";
 $usage .= "\t $0 -file <file>\n";
-$usage .= "\tread a file with lines in the form <user_now>,<foldernow>,<user_new>,<foldernew>,<part>\n";
+$usage .= "\tread a file with lines in the form <user_now>;<foldernow>;<user_new>;<foldernew>;<part>\n";
 $usage .= "\t<part> can be the empty or null char if you don't want to change the partition.\n";
-$usage .= "\tie\n\t\tmbox1,folder1,mbox2,folder2,\n\n";
+$usage .= "\tie\n\t\tmbox1;folder1;mbox2;folder2;\n\n";
 
 my $auth = {
     -mechanism => 'login',
@@ -104,7 +104,7 @@ for ( $ARGV[0] ) {
 		foreach $line (@raw_data)
 		{
 			chomp($line);
-			@PARAM=split(/\,/,$line,5);
+			@PARAM=split(/\;/,$line,5);
 			if ($#PARAM != 4) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
 			else {
 				($mboxold[$i],$fdrold,$mboxnew[$i],$fdrnew,$part[$i])=@PARAM;
