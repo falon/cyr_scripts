@@ -17,8 +17,9 @@ use vars qw($cyrus_server $cyrus_user $cyrus_pass);
 my $usage  = "\nUsage:\t$0 -mboxold <user_now> -folderold <foldernow> -mboxnew <user_new> -foldernew <foldernew> [-p part]\n";
 $usage .= "\tmove <foldernow> of <user_now> in <foldernew> of <user_new>\n";
 $usage .= "\tinto new partition <part>\n\n";
-$usage .= "\t $0 -file <file>\n";
+$usage .= "\t $0 -file <file> [-utf7]\n";
 $usage .= "\tread a file with lines in the form <user_now>;<foldernow>;<user_new>;<foldernew>;<part>\n";
+$usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n";
 $usage .= "\t<part> can be the empty or null char if you don't want to change the partition.\n";
 $usage .= "\tie\n\t\tmbox1;folder1;mbox2;folder2;\n\n";
 
@@ -56,6 +57,7 @@ use Unicode::IMAPUtf7;
 use Encode;
 my $code='ISO-8859-1';
 my $imaputf7 = Unicode::IMAPUtf7->new();
+my $utf7 = 0;
 
 if (! defined($ARGV[0]) ) {
 	        die($usage);
@@ -92,7 +94,8 @@ for ( $ARGV[0] ) {
 		$i=1;
 	}
 	elsif (/^-(-|)file/)  {
-		GetOptions(     'file=s'   => \$data_file
+		GetOptions(     'file=s'   => \$data_file,
+				'utf7'   => \$utf7
 		) or die($usage);
 		@ARGV == 0
 			or die("\nToo many arguments.\n$usage");
@@ -109,8 +112,10 @@ for ( $ARGV[0] ) {
 			else {
 				($mboxold[$i],$fdrold,$mboxnew[$i],$fdrnew,$part[$i])=@PARAM;
 				 $part[$i]=~ s/\s+$//;  # Remove trailing spaces
-				 $folderold[$i] = $imaputf7->encode(encode($code,$fdrold));
-				 $foldernew[$i] = $imaputf7->encode(encode($code,$fdrnew));
+				 if ($utf7 == 0) {
+				 	$folderold[$i] = $imaputf7->encode(encode($code,$fdrold));
+				 	$foldernew[$i] = $imaputf7->encode(encode($code,$fdrnew));
+				}
 			 }
 			 $i++;
 		}
