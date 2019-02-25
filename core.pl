@@ -178,7 +178,6 @@ sub createMailbox {
   $folder = decodefoldername($subfolder, $imaputf7, $code);
   if ($cyrus->error) {
     printLog('LOG_WARNING',"action=addmailbox mailbox=\"". $user."\" folder=\"$folder\" partition=\"$partition\" error=\"". $cyrus->error .'" status=fail', $v);
-	exit;
   } else {
     if (!defined($partition)) {$partition='root partition of mailbox or autoselected by Cyrus';}
     printLog('LOG_WARNING',"action=addmailbox status=success mailbox=\"$user\" folder=\"$folder\" partition=\"$partition\"", $v);
@@ -232,7 +231,6 @@ sub renameMailbox {
   $folder_new = decodefoldername($folder_new, $imaputf7, $code);
   if ($cyrus->error) {
     printLog('LOG_WARNING',"action=renmailbox status=fail mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" partition=$partition error=\"" . $cyrus->error . '"', $v);
-    exit;
   } else {
 	if ($partition eq NULL) {
 		printLog('LOG_WARNING',"action=renmailbox status=success mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\"", $v);
