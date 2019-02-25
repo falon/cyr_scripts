@@ -116,6 +116,10 @@ for ( $ARGV[0] ) {
 				 	$folderold[$i] = $imaputf7->encode(encode($code,$fdrold));
 				 	$foldernew[$i] = $imaputf7->encode(encode($code,$fdrnew));
 				}
+				else {
+					$folderold[$i] = $fdrold;
+					$foldernew[$i] = $fdrnew;
+				}
 			 }
 			 $i++;
 		}
