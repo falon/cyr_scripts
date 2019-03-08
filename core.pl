@@ -12,10 +12,6 @@ our $cyrus_pass = "cyrusadmin";
 
 
 
-sub sep {
-	return $sep;
-}
-
 sub printLog {
   my ($sev,$mes,$verbose) = @_;
    syslog($sev,$mes);
@@ -150,11 +146,9 @@ sub cyrusconnect {
 	use Sys::Syslog;
 	openlog("$mainproc/cyrusconn",'pid','LOG_MAIL');
 	my $cyrus = Cyrus::IMAP::Admin->new($Server);
-        $cyrus->authenticate(%$auth);
-        if ($cyrus->{error}) {
-        	printLog('LOG_ALERT',"action=cyrusconnect status=fail error=\"$error\" server=$Server mailHost=$Server",$v);
-                closelog();
-                return 0;
+        if (! $cyrus->authenticate(%$auth) ) {
+        	printLog('LOG_ALERT',"action=cyrusconnect status=fail error=\"Errors happen during authentication\" server=$Server mailHost=$Server",$v);
+                $cyrus = 0;
 	}
 	else {
 		printLog('LOG_DEBUG',"action=cyrusconnect status=success server=$Server mailHost=$Server",$v);
@@ -168,7 +162,7 @@ sub createMailbox {
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
   use Encode;
-  my ($mainproc, $cyrus, $user, $subfolder, $partition, $v) = @_;
+  my ($mainproc, $cyrus, $user, $subfolder, $partition, $sep, $v) = @_;
 
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
@@ -193,7 +187,7 @@ sub deleteMailbox {
   use Encode;
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
-  my ($mainproc, $cyrus, $user, $subfolder ,$v) = @_;
+  my ($mainproc, $cyrus, $user, $subfolder, $sep, $v) = @_;
   my $mailbox=composembx($user,$subfolder,$sep,'user');
   openlog("$mainproc/delMbox", "pid", LOG_MAIL);
     $cyrus->delete('user'. $sep . $user);
@@ -212,7 +206,7 @@ sub deleteMailbox {
 sub renameMailbox {
 
   use Sys::Syslog;
-  my ($mainproc, $cyrus, $user_old, $folder_old, $user_new, $folder_new, $partition, $v) = @_;
+  my ($mainproc, $cyrus, $user_old, $folder_old, $user_new, $folder_new, $partition, $sep, $v) = @_;
   use Unicode::IMAPUtf7;
   use Encode;
   my $code = 'ISO-8859-1';
@@ -246,7 +240,7 @@ sub renameMailbox {
 sub transferMailbox {
 
   use Sys::Syslog;
-  my ($mainproc, $cyrus, $user, $destServer, $partition, $v) = @_;
+  my ($mainproc, $cyrus, $user, $destServer, $partition, $sep, $v) = @_;
   openlog("$mainproc/xferMbox", "pid", LOG_MAIL);
   if ($partition eq '') { $partition = NULL; }
 
@@ -310,7 +304,7 @@ sub changeOXIMAPServer {
 
 sub setAnnotationMailbox {
 
-  my ($mainproc, $cyrus, $user, $subfolder, $attr, $value, $v) = @_;
+  my ($mainproc, $cyrus, $user, $subfolder, $attr, $value, $sep, $v) = @_;
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
   use Encode;
@@ -405,7 +399,7 @@ sub setQuota {
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
   use Encode;
-  my ($mainproc, $cyrus, $user, $subfolder, $quota_size, $v) = @_;
+  my ($mainproc, $cyrus, $user, $subfolder, $quota_size, $sep, $v) = @_;
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
   openlog("$mainproc/setQuota", "pid", LOG_MAIL);
@@ -455,7 +449,7 @@ sub setQuota {
 
 sub setACL {
 
-  my ($mainproc, $cyrus, $user,$subfolder,$who,$right, $v) = @_;
+  my ($mainproc, $cyrus, $user,$subfolder,$who,$right, $sep, $v) = @_;
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
   use Encode;
@@ -487,7 +481,7 @@ sub setACL {
 
 sub listACL {
 
-  my ($mainproc, $cyrus, $user,$subfolder,$who, $v) = @_;
+  my ($mainproc, $cyrus, $user,$subfolder,$who, $sep, $v) = @_;
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
   use Encode;
@@ -658,7 +652,7 @@ sub delRemovedUser {
         use Net::LDAP;
 	use Cyrus::IMAP::Admin;
         use Sys::Syslog;
-        my ($mainproc,$ldapServer,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_user,$cyrus_pass,$v) = @_;
+        my ($mainproc,$ldapServer,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_user,$cyrus_pass,$sep,$v) = @_;
 
 	openlog("$mainproc/delRemUser", "pid", LOG_MAIL);
 	my $auth = {
@@ -730,8 +724,8 @@ sub delRemovedUser {
 			closelog();
                         return 0;
 		}
-		setACL($mainproc, $cyrus, $uid,'INBOX', $cyrus_user,'all', $v);
-	        deleteMailbox ( $mainproc,$cyrus,$uid, 'INBOX' ,$v );
+		setACL($mainproc, $cyrus, $uid,'INBOX', $cyrus_user,'all', $sep, $v);
+	        deleteMailbox ( $mainproc,$cyrus,$uid, 'INBOX' ,$sep, $v );
 	}
 
 	$mesg = $ldap->unbind;   # take down LDAP session
@@ -747,7 +741,7 @@ sub removeDelUser {
 	use Date::Calc qw(Delta_Days Add_Delta_Days Today Date_to_Text_Long Decode_Language);
 	use String::Scanf;
 
-        my ($mainproc,$ldapServer,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_server,$cyrus_user,$cyrus_pass,$gracedays,$v) = @_;
+        my ($mainproc,$ldapServer,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_server,$cyrus_user,$cyrus_pass,$gracedays,$sep,$v) = @_;
 
 	my $return = 1;
         my $auth = {
@@ -760,8 +754,16 @@ sub removeDelUser {
             -password => $cyrus_pass,
         };
 
-	if ($gracedays eq '') { $gracedays = 30; }
-	if ($ldapBase eq '')  { $ldapBase ='o=servizirete,cn=en'; }
+	if ( $gracedays !~ /\d+/ ) {
+		printLog('LOG_ERR',"action=cyrpurge status=fail error=\"grace specified in configuration is not a number!\"");
+		closelog();
+		return 0;
+	}
+	if ($ldapBase eq '')  {
+		printLog('LOG_ERR',"action=ldapsearch status=fail error=\"no BASEDN defined in conf.\" server=$ldapServer port=$ldapPort bind=\"$ldapBindUid\"",$v);
+		closelog();
+		return 0;
+	}
 
 
 	@now = Today(1);
@@ -853,9 +855,9 @@ sub removeDelUser {
                         printLog('LOG_ALERT',"action=cyrusconnect status=$status error=\"$error\" server=$cyrus_server mailHost=$cyrus_server",0);
                 }
 		else {
-                	if (!(setACL($mainproc, $cyrus, $uid,'INBOX', $cyrus_user,'all',0))) { $status = "fail"; }
+                	if (!(setACL($mainproc, $cyrus, $uid,'INBOX', $cyrus_user,'all',$sep,0))) { $status = "fail"; }
 			printLog('LOG_INFO',"action=cyrusdel status=notice server=$cyrus_server mailHost=$cyrus_server detail=\"Removing mailbox $uid from store\" ",0);
-                	if (!( deleteMailbox ( $mainproc,$cyrus,$uid,'INBOX',0 ) )) { $status = "fail"; };
+                	if (!( deleteMailbox ( $mainproc,$cyrus,$uid,'INBOX',$sep,0 ) )) { $status = "fail"; };
 		}
 
 		print "\t$status";

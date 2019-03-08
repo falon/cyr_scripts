@@ -21,9 +21,15 @@ my $usage  = "\nUsage:\t$0 -u <mailbox> -folder <folder> -uid <user> -right <rig
 $usage .= "\t $0 -file <file>\n";
 $usage .= "\t read a file with lines in the form <mailbox>;<folder>;<user>;<right>.\n\n";
 
-
+use Config::Simple;
+my $cfg = new Config::Simple();
+$cfg->read('cyr_scripts.ini');
+my $imapconf = $cfg->get_block('imap');
+my $sep = $imapconf->{sep};
+my $cyrus_server = $imapconf->{server};
+my $cyrus_user = $imapconf->{user};
+my $cyrus_pass = $imapconf->{pass};
 require "/usr/local/cyr_scripts/core.pl";
-use vars qw($sep $cyrus_server $cyrus_user $cyrus_pass);
 use Cyrus::IMAP::Admin;
 use Getopt::Long;
 use Unicode::IMAPUtf7;
@@ -65,7 +71,7 @@ my @right = undef;
 my $logproc='setACL';
 my $cyrus;
 
-my $code='ISO-8859-1';
+my $code= $cfg->param('code.code');
 my $imaputf7 = Unicode::IMAPUtf7->new();
 
 if (! defined($ARGV[0]) ) {
@@ -122,12 +128,12 @@ if (! defined($ARGV[0]) ) {
 
 
 if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $v)) == 0) {
-        return 0;
+        exit(255);
 }
 
 
 LOOP: for ($c=0;$c<$i;$c++) {
-	$oldright = listACL($logproc, $cyrus, $mailbox[$c], $folder[$c], $who[$c], $v);
+	$oldright = listACL($logproc, $cyrus, $mailbox[$c], $folder[$c], $who[$c], $sep, $v);
 	if ($oldright eq $right[$c]) {
 		$status='success';
                 $sev='LOG_WARNING';
@@ -143,5 +149,5 @@ LOOP: for ($c=0;$c<$i;$c++) {
 		next LOOP;
 	}
 
-	setACL($logproc, $cyrus, $mailbox[$c], $folder[$c], $who[$c], $right[$c], $v);
+	setACL($logproc, $cyrus, $mailbox[$c], $folder[$c], $who[$c], $right[$c], $sep, $v);
 }

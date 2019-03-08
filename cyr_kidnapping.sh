@@ -1,7 +1,7 @@
 #/bin/bash
 # Author: MFF
 # Name: cyr_kidnapping.sh
-# Description: copy all file from a mbpath to the destination folder "consegne".
+# Description: copy all file from a mbpath to a destination folder.
 #
 
 echo -en "\n\nInsert the existing full path where to copy :-> "

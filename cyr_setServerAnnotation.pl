@@ -18,8 +18,15 @@ if ($#ARGV != 4) {
         exit;
 }
 
+use Config::Simple;
+my $cfg = new Config::Simple();
+$cfg->read('cyr_scripts.ini');
+my $imapconf = $cfg->get_block('imap');
+my $sep = $imapconf->{sep};
+my $cyrus_server = $imapconf->{server};
+my $cyrus_user = $imapconf->{user};
+my $cyrus_pass = $imapconf->{pass};
 require "/usr/local/cyr_scripts/core.pl";
-use vars qw($cyrus_server $cyrus_user $cyrus_pass);
 use Mail::IMAPTalk;
 use Sys::Syslog;
 

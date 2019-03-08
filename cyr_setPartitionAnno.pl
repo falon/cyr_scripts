@@ -16,21 +16,27 @@ if ($#ARGV > 0) {
         exit;
 }
 
+use Config::Simple;
+my $cfg = new Config::Simple();
+$cfg->read('cyr_scripts.ini');
+my $imapconf = $cfg->get_block('imap');
+my $sep = $imapconf->{sep};
+my $cyrus_server = $imapconf->{server};
+my $cyrus_user = $imapconf->{user};
+my $cyrus_pass = $imapconf->{pass};
+
 require "/usr/local/cyr_scripts/core.pl";
-use vars qw($cyrus_server $cyrus_user $cyrus_pass);
 
 #
 # CONFIGURATION PARAMS
 #
+my $annoconf = $cfg->get_block('partition'); 
 my $mainproc = 'setPartAn';
-my $debug = 1;
-my $th = 900;	# Threshold % space occupied for excluding a partition if roundrobin
-my $Tc = 9;	# Refresh time in seconds if roundrobin
-my $algo = 'free';
-# 'free' for select partition with more space
-# 'rr'   for select partition in round robin fashion
+my $debug = $annoconf->{debug};
+my $th = $annoconf->{threshold};
+my $Tc = $annoconf->{tc};
+my $algo = $annoconf->{algo};
 my $df= `which cyr_df`;
-#my $df = 'cat /usr/local/bin/provadf';
 
 my %optDom = (
 	domain_private_tld => {
@@ -51,12 +57,12 @@ our $opt_d = 0;
 my $continue = 1;
 getopts('d');
 %argdaemon = (
-	work_dir     => '/var/run/cyr_setPartitionAnno',
-	pid_file     => 'setPartitionAnno.pid'
+	work_dir     =>  $annoconf->{run_dir},
+	pid_file     =>  $annoconf->{pid_file}
 );
 %procpidfile = (
-        dir     => '/var/run/cyr_setPartitionAnno',
-        name     => 'setPartitionAnno.pid'
+        dir     =>  $annoconf->{pid_dir},
+        name     =>  $annoconf->{pid_file}
 );
 
 if ($debug) { use POSIX qw/strftime/; use Term::ANSIColor; }
@@ -228,10 +234,11 @@ while ($continue) {
 	      Password => $cyrus_pass,
 	      Uid      => 0 );
 	$error=$@;
-	if (!$IMAP) {
+	if (not $IMAP) {
 		openlog("$mainproc/imapconnect",'pid','LOG_MAIL');
 		printLog('LOG_ERR',"action=imapconnect status=fail error=\"$error\" server=$cyrus_server mailHost=$cyrus_server",$debug);
 		closelog();
+		exit(255);
 	}
 
 	if ($debug) {

@@ -11,28 +11,36 @@
 # Prerequisite: admin uid and password for the two imap server are the same.
 #
 
+use Config::Simple;
+my $cfg = new Config::Simple();
+$cfg->read('cyr_scripts.ini');
+my $imapconf = $cfg->get_block('imap');
+my $sep = $imapconf->{sep};
+my $cyrus_user = $imapconf->{user};
+my $cyrus_pass = $imapconf->{pass};
+my $ldapconf = $cfg->get_block('ldap');
+my $xferconf = $cfg->get_block('xfer');
 require "/usr/local/cyr_scripts/core.pl";
-use vars qw($sep $cyrus_user $cyrus_pass);
 use URI;
 
 # Config setting#
 
 my $v = 1;	# verbosity to STDOUT
 # LDAP
-my $ldaphost	= 'ldap.example.com';
-my $ldapPort	= 489;
-my $ldapBase	= 'cn=en';	# Base dn containing whole domains
-my $ldapBindUid	= 'uid=admin,cn=en';
-my $ldapBindPwd	= 'ldapassword';
+my $ldaphost	= $ldapconf->{server};
+my $ldapPort	= $ldapconf->{port};
+my $ldapBase	= $ldapconf->{baseDN};	# Base dn containing whole domains
+my $ldapBindUid	= $ldapconf->{user};
+my $ldapBindPwd	= $ldapconf->{pass};
 # Orig Cyrus Server
-my $origServer	= 'imap.example.com'; 			# Cyrus server where relocating from
+my $origServer	= $xferconf->{origserver}; 			# Cyrus server where relocating from
 # OPEN-XCHANGE
-my $noproxy = ('example.com');
-my $netloc = 'apiOX.example.com:80';
-my $realm = 'PSNET';
-my $apiuser = 'apiuser';
-my $apipwd = 'apipassword';
-my $url = URI->new( 'http://apiOX.example.com/psnetuc/hsrvs/callback/mailBatch_sanitizeGrants.do' );
+my $noproxy = $xferconf->{noproxy};
+my $netloc = $xferconf->{netloc};
+my $realm = $xferconf->{realm};
+my $apiuser = $xferconf->{apiuser};
+my $apipwd = $xferconf->{apipwd};
+my $url = URI->new( $xferconf->{url} );
 
 
 
@@ -131,7 +139,7 @@ my $auth = {
 };
 
 if ( ($cyrus = cyrusconnect($mainproc, $auth, $origServer, $v)) == 0) {
-        return 0;
+        exit(255);
 }
 
 
@@ -151,7 +159,7 @@ LOOP: for ($c=0;$c<$i;$c++) {
 		);
 
 		print 'Start transferring <'.$user[$c].'> on <'.$destServer[$c].'>... ';
-		if ( transferMailbox($mainproc, $cyrus,$user[$c],$destServer[$c],$part[$c],0) ) {
+		if ( transferMailbox($mainproc, $cyrus,$user[$c],$destServer[$c],$part[$c],$sep,0) ) {
 			if ( ldapReplaceMailhost($mainproc, $ldaphost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$user[$c],$origServer,$destServer[$c],0) ) {
 				if ( changeOXIMAPServer($mainproc, $apiuser, $apipwd, $netloc, $realm, $url, $noproxy,0) ) {
 					print 'OK. Job terminated with success.'."\n";

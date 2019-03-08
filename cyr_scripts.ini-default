@@ -1,0 +1,56 @@
+## Configuration file for cyr scripts
+
+[imap]
+sep	= "/"
+server	= localhost
+user	= cyrusadmin
+pass	= cyrusadmin
+
+[ldap]
+server	= ldap.example.com
+port	= 389
+baseDN	= cn=en
+user	= uid=admin,cn=en
+pass	= ldapassword
+
+[logintest]
+active	= 1
+procdir = "/run/cyrus/proc"
+Tw	= 60
+
+[code]
+code	= ISO-8859-1
+
+[orphan]
+grace	= 30
+
+[restore]
+# To use with the deprecated cyr_restorefolder.pl
+country		= it_IT
+rootfolder	= RIPRISTINATI
+
+[xfer]
+# origserver is the mailHost to change over LDAP.
+origserver	= cyrus.example.com
+# OX API
+noproxy		= example.com, example.org
+netloc		= apiOX.example.com:80
+realm		= PSNET
+apiuser		= apiuser
+apipwd		= apipassword
+url		= http://apiOX.example.com/path/hsrvs/callback/OXBatch.do
+
+[partition]
+# Threshold % space occupied for excluding a partition if roundrobin
+threshold	= 90
+# Refresh time in seconds if roundrobin
+tc		= 600
+# Algo Selection
+# 'free' for select partition with more space
+# 'rr'   for select partition in round robin fashion
+algo		= free
+debug		= 1
+# System
+run_dir		= /run/cyr_setPartitionAnno
+pid_dir		= /run/cyr_setPartitionAnno
+pid_file	= setPartitionAnno.pid

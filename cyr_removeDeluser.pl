@@ -32,12 +32,29 @@ if (($#ARGV == 0)||($#ARGV == 2)) { print $usage; die("Specify all parameters yo
 #
 # CONFIGURATION PARAMS
 #
-my $ldapHost = 'ldap.example.com';
-my $ldapPort = 489;
-my $ldapBase = 'o=servizirete,cn=en';
-my $ldapBindUid = 'uid=admin,cn=en';
-my $ldapBindPwd = 'ldapassword';
-my $grace = '';
+use Config::Simple;
+my $cfg = new Config::Simple();
+$cfg->read('cyr_scripts.ini');
+my $imapconf = $cfg->get_block('imap');
+my $ldapconf = $cfg->get_block('ldap');
+my $sep = $imapconf->{sep};
+my $cyrus_server = $imapconf->{server};
+my $cyrus_user = $imapconf->{user};
+my $cyrus_pass = $imapconf->{pass};
+
+my $ldapHost    = $ldapconf->{server};
+my $ldapPort    = $ldapconf->{port};
+my $ldapBase    = $ldapconf->{baseDN};  # Base dn containing whole domains
+my $ldapBindUid = $ldapconf->{user};
+my $ldapBindPwd = $ldapconf->{pass};
+
+# Why the following test? Because if you specify in Config::Simple
+# grace =
+# then $cfg->param('orphan.grace') become a null array!
+if ( ref($cfg->param('orphan.grace')) eq 'ARRAY') {
+	die("$usage\tThe grace parameter is wrong. Check it!\n");
+}
+my $grace = $cfg->param('orphan.grace');
 my $verbose = 1;
 
 #
@@ -72,15 +89,16 @@ if ($#ARGV >= 3) {
      }
 }
 
+
+
 require "/usr/local/cyr_scripts/core.pl";
-use vars qw($cyrus_server $cyrus_user $cyrus_pass);
 
 
 ######################################################
 #####			MAIN			######
 ######################################################
 
-my $ok = removeDelUser ( $logproc, $ldapHost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_server,$cyrus_user,$cyrus_pass,$grace, $verbose );
+my $ok = removeDelUser ( $logproc, $ldapHost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_server,$cyrus_user,$cyrus_pass,$grace, $sep, $verbose );
 if (!$ok) {
 	print "\n\n\e[33mSome errors occur. Please, see urgently the logs.\e[39m\n\n";
 }

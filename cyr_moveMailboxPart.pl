@@ -6,8 +6,17 @@
 #  -f <file>				   use a file in the form <user_now> <user_new> [<part>]
 
 
+use Config::Simple;
+my $cfg = new Config::Simple();
+$cfg->read('cyr_scripts.ini');
+my $imapconf = $cfg->get_block('imap');
+my $sep = $imapconf->{sep};
+my $cyrus_server = $imapconf->{server};
+my $cyrus_user = $imapconf->{user};
+my $cyrus_pass = $imapconf->{pass};
+my $codeconf = $cfg->get_block('code');
+my $logincheck = $cfg->get_block('logintest');
 require "/usr/local/cyr_scripts/core.pl";
-use vars qw($cyrus_server $cyrus_user $cyrus_pass);
 
 # Config setting#
 
@@ -45,17 +54,17 @@ my $c = 0;
 my $v = 1; #verbosity
 my $logproc = 'renameMailbox';
 ## Parameter used to check if an account is logged in
-my $procdir = '/run/cyrus/proc';
+my $procdir = $logincheck->{procdir};
 # Interval time to check if account is logged
-my $Tw = 60;
+my $Tw =  $logincheck->{Tw};
 # Set 1 to check if account is logged in before move folders
-my $useAccountCheck = 1;
+my $useAccountCheck =  $logincheck->{active};
 
 
 use Getopt::Long;
 use Unicode::IMAPUtf7;
 use Encode;
-my $code='ISO-8859-1';
+my $code=$codeconf->{code};
 my $imaputf7 = Unicode::IMAPUtf7->new();
 my $utf7 = 0;
 
@@ -137,7 +146,7 @@ use Cyrus::IMAP::Admin;
 my $cyrus;
 
 if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $v)) == 0) {
-        return 0;
+        exit(255);
 }
 
 for ($c=0;$c<$i;$c++) {
@@ -151,5 +160,5 @@ for ($c=0;$c<$i;$c++) {
 			accountIsLogged($logproc, $mboxnew[$c], $procdir, $Tw, $v);
 		}
 	}
-	renameMailbox($logproc, $cyrus ,$mboxold[$c], $folderold[$c], $mboxnew[$c], $foldernew[$c], $part[$c], $v);
+	renameMailbox($logproc, $cyrus ,$mboxold[$c], $folderold[$c], $mboxnew[$c], $foldernew[$c], $part[$c], $sep, $v);
 }

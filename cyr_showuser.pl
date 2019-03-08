@@ -38,7 +38,7 @@ if ($opt{p}) {
 		$thispart = $opt{p};
          }
 
-
+if (not defined ($user[0])) { die ($usage); }
 
 
 use Cyrus::IMAP::Admin;
@@ -52,8 +52,15 @@ my $client;
 my $logproc = 'showmb';
 my $verbose = 0;
 
+use Config::Simple;
+my $cfg = new Config::Simple();
+$cfg->read('cyr_scripts.ini');
+my $imapconf = $cfg->get_block('imap');
+my $sep = $imapconf->{sep};
+my $cyrus_server = $imapconf->{server};
+my $cyrus_user = $imapconf->{user};
+my $cyrus_pass = $imapconf->{pass};
 require "/usr/local/cyr_scripts/core.pl";
-use vars qw($cyrus_server $cyrus_user $cyrus_pass);
 
 #
 # assuming all necessary variables have been declared and filled accordingly:
@@ -72,14 +79,14 @@ my $auth = {
 };
 
 if ( ($client = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
-        return 0;
+	exit(255);
 }
 
 
 printf "\n\n".'%-30.30s  %-9s %-9s %-8s %-27s %-27s %-12s'."\n", 'Mailbox','Used','Quota','Used(%)','LastIMAPupdate','Lastpop','Partition';
 for ($c=0;$c<$i;$c++) {
 
-		@mailboxes=$client->listmailbox('user/'.$user[$c]);
+		@mailboxes=$client->listmailbox('user'.$sep.$user[$c]);
 		$nmbox+=$#mailboxes+1;
 		for ($m=0;$m<=$#mailboxes;$m++) {
                         @info = $client->info($mailboxes[$m][0]);

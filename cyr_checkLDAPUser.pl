@@ -9,14 +9,16 @@
 require "/usr/local/cyr_scripts/core.pl";
 
 # Config setting#
-
-
+use Config::Simple;
+my $cfg = new Config::Simple();
+$cfg->read('cyr_scripts.ini');
 # LDAP
-my $ldaphost	= 'ldap.example.com';
-my $ldapPort	= 489;
-my $ldapBase	= 'cn=en';	# Base dn containing whole domains
-my $ldapBindUid	= 'uid=admin,cn=en';
-my $ldapBindPwd	= 'ldapassword';
+my $ldapconf = $cfg->get_block('ldap');
+my $ldaphost    = $ldapconf->{server};
+my $ldapPort    = $ldapconf->{port};
+my $ldapBase    = $ldapconf->{baseDN};  # Base dn containing whole domains
+my $ldapBindUid = $ldapconf->{user};
+my $ldapBindPwd = $ldapconf->{pass};
 
 
 ## Change nothing below, if you are a stupid user! ##
