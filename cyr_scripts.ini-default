@@ -9,12 +9,12 @@ pass	= cyrusadmin
 [ldap]
 server	= ldap.example.com
 port	= 389
-baseDN	= cn=en
-user	= uid=admin,cn=en
+baseDN	= "cn=en"
+user	= "uid=admin,cn=en"
 pass	= ldapassword
 
 [logintest]
-active	= 1
+active	= 0
 procdir = "/run/cyrus/proc"
 Tw	= 60
 

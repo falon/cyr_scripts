@@ -2,13 +2,9 @@
 #
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
-#### Widely conf option ####
-our $build = '0.1.2 - 22 Feb 2019';
-our $sep = '/';
-our $cyrus_server = "localhost";
-our $cyrus_user = "cyrusadmin";
-our $cyrus_pass = "cyrusadmin";
-############################
+#########  Build release  #########
+our $build = '0.1.3 - 13 Mar 2019';
+###################################
 
 
 
@@ -157,6 +153,31 @@ sub cyrusconnect {
 	return $cyrus;
 }
 
+sub cyrusVersion {
+# Query the Cyrus IMAP version
+	my ($client) = @_;
+	my $info;
+	$client->addcallback({-trigger => 'ID',
+        	-callback => sub {
+                	my %d = @_;
+                	$info = $d{-text};
+	}});
+	my ($rc, $msg) = $client->send('', '', 'ID NIL');
+	$client->addcallback({-trigger => 'ID'});
+	if ($rc ne 'OK') {
+		return 'ERROR';
+	}
+	while ($info =~ s/\"([^\"]+)\"\s+(\"[^\"]+\"|NIL)\s*//) {
+		my $field = $1;
+		my $value = $2;
+		$value =~ s/\"//g;
+		if ($field eq 'version') {
+                	return $value;
+		}
+	}
+	return 'NIL';
+}
+
 sub createMailbox {
 
   use Sys::Syslog;
@@ -213,12 +234,12 @@ sub renameMailbox {
   my $imaputf7 = Unicode::IMAPUtf7->new();
   openlog("$mainproc/renMbox", "pid", LOG_MAIL);
 
-  if ($partition eq '') { $partition = NULL; }
+  if ($partition eq '') { undef $partition; }
 
   $mailbox_old = composembx($user_old, $folder_old, $sep, 'user');
   $mailbox_new = composembx($user_new, $folder_new, $sep, 'user');
 
-  if ($partition ne NULL) { $cyrus->rename($mailbox_old, $mailbox_new, $partition); }
+  if (defined $partition) { $cyrus->rename($mailbox_old, $mailbox_new, $partition); }
   else { $cyrus->rename($mailbox_old, $mailbox_new); }
 
   $folder_old = decodefoldername($folder_old, $imaputf7, $code);
@@ -226,7 +247,7 @@ sub renameMailbox {
   if ($cyrus->error) {
     printLog('LOG_WARNING',"action=renmailbox status=fail mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" partition=$partition error=\"" . $cyrus->error . '"', $v);
   } else {
-	if ($partition eq NULL) {
+	if (!defined $partition) {
 		printLog('LOG_WARNING',"action=renmailbox status=success mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\"", $v);
 	}
 	else {
@@ -242,11 +263,11 @@ sub transferMailbox {
   use Sys::Syslog;
   my ($mainproc, $cyrus, $user, $destServer, $partition, $sep, $v) = @_;
   openlog("$mainproc/xferMbox", "pid", LOG_MAIL);
-  if ($partition eq '') { $partition = NULL; }
+  if ($partition eq '') { undef $partition; }
 
   $mailbox = "user". $sep . $user;
 
-  if ($partition ne NULL) { $cyrus->xfermailbox($mailbox, $destServer, $partition); }
+  if (defined $partition) { $cyrus->xfermailbox($mailbox, $destServer, $partition); }
   else { $cyrus->xfermailbox($mailbox, $destServer); }
 
   if ($cyrus->error) {
@@ -254,7 +275,7 @@ sub transferMailbox {
     closelog();
     return 0;
   } else {
-        if ($partition eq NULL) {
+        if (!defined $partition) {
                 printLog('LOG_WARNING',"action=cyrxfer status=success mailbox=\"$user\" mailHost=$destServer", $v);
         }
         else {
@@ -384,6 +405,7 @@ sub setAnnotationServer {
 	$return=0;
   }
   else {
+	$status='success';
 	$detail='value changed';
   }
 
@@ -693,15 +715,15 @@ sub delRemovedUser {
                 $error="No removable mailboxes found";
                 printLog('LOG_ERR',"action=ldapsearch status=success detail=\"$error\" server=$ldapServer port=$ldapPort bind=\"$ldapBindUid\"",$v);
                 closelog();
-                return 0;
+                return 1;
         }
 
-	foreach $entry ( $mesg->entry ) {
+	foreach $entry ( $mesg->entries ) {
 		$cyrus_server = $entry->get_value( 'mailHost' );
 		$uid = $entry->get_value( 'uid' );
 		$dn= $entry->dn();
  
-        	print "LDAP entry to remove: uid= <$uid>\tmailHost= <$cyrus_server>\n";
+		print "Entry to remove: uid= <$uid>\tmailHost= <$cyrus_server>\n";
 
 		## Remove from LDAP ##
                 $mesg = $ldap->delete( $dn );
@@ -713,7 +735,7 @@ sub delRemovedUser {
                 	return 0;
             	}
 
-                print "Success - <$uid> removed from LDAP\n";
+		##print "Success - <$uid> removed from LDAP\n";
 		printLog('LOG_INFO',,"action=ldapdel status=success uid=$uid server=$ldapServer port=$ldapPort bind=\"$ldapBindUid\" mailHost=$cyrus_server",$v);
 
 		## Remove from Cyrus PopServer ##
@@ -725,12 +747,15 @@ sub delRemovedUser {
                         return 0;
 		}
 		setACL($mainproc, $cyrus, $uid,'INBOX', $cyrus_user,'all', $sep, $v);
-	        deleteMailbox ( $mainproc,$cyrus,$uid, 'INBOX' ,$sep, $v );
+	        if (! deleteMailbox ( $mainproc,$cyrus,$uid, 'INBOX' ,$sep, $v ) ) {
+			return 0;
+		}
 	}
 
 	$mesg = $ldap->unbind;   # take down LDAP session
         $ldap->disconnect ($ldapServer, port => $ldapPort);
 	closelog();
+	return 1;
 }
 
 

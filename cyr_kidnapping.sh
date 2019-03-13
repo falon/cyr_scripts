@@ -4,7 +4,9 @@
 # Description: copy all file from a mbpath to a destination folder.
 #
 
-echo -en "\n\nInsert the existing full path where to copy :-> "
+echo -en "\n\n Welcome to Cyr Kidnapping\n"
+echo -en "To use this tool you must run locally to a Cyrus IMAP server.\n"
+echo -en "\nInsert the existing full path where to copy :-> "
 read -r folder
 if [ -z "${folder}" ] ; then
 	echo -en "\e[31mType the full path, please!\e[39m\n\n"

@@ -122,7 +122,7 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
 for ($c=0;$c<$i;$c++) {
 	print "\n\tAdding User: $newuser[$c]...\n";
 	createMailbox($logproc, $cyrus, $newuser[$c],'INBOX',$partition[$c], $sep, $verbose);
-        setQuota($logproc, $cyrus, $newuser[$c], $quota_size[$c], $sep, $verbose);
+        setQuota($logproc, $cyrus, $newuser[$c], 'INBOX', $quota_size[$c], $sep, $verbose);
 	createMailbox($logproc, $cyrus, $newuser[$c],'Spam', $partition[$c], $sep, $verbose);
 	setAnnotationMailbox($logproc, $cyrus, $newuser[$c],'Spam', 'expire', $expSpam[$c], $sep, $verbose);
 	setACL($logproc, $cyrus, $newuser[$c],'Spam','anyone','p', $sep, $verbose);

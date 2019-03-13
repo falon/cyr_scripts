@@ -17,7 +17,7 @@ my $usage  = "\nUsage:\t$0 -u <user> <folder> <quota> MB\n";
 $usage .= "\n\n";
 $usage .= "\t $0 -f <file>\n";
 $usage .= "\tread a file with lines in the form <user>;<folder>;<quota> MB\n\n";
-$usage .= "The folder MUST be a quotaroot, otherwise it become a new quotaroot!\n\n";
+$usage .= "The folder MUST be a quotaroot, otherwise it becomes a new quotaroot!\n\n";
 
 my @user = undef;
 my @quota = undef;

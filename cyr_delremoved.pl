@@ -56,4 +56,12 @@ my $verbose = 1;
 ######################################################
 
 my $logproc = 'delremoved';
-delRemovedUser ( $logproc, $ldapHost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_user,$cyrus_pass, $sep, $verbose );
+my $status=delRemovedUser ( $logproc, $ldapHost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_user,$cyrus_pass, $sep, $verbose );
+
+if ($status) {
+	print 'Process successfully completed';
+}
+else {
+	print 'Process exited abnormally due to errors';
+}
+print "\n";
