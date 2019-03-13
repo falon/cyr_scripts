@@ -34,7 +34,7 @@ if (($#ARGV == 0)||($#ARGV == 2)) { print $usage; die("Specify all parameters yo
 #
 use Config::Simple;
 my $cfg = new Config::Simple();
-$cfg->read('cyr_scripts.ini');
+$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
 my $imapconf = $cfg->get_block('imap');
 my $ldapconf = $cfg->get_block('ldap');
 my $sep = $imapconf->{sep};

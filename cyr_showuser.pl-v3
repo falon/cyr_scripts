@@ -54,7 +54,7 @@ my $verbose = 0;
 
 use Config::Simple;
 my $cfg = new Config::Simple();
-$cfg->read('cyr_scripts.ini');
+$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
 my $imapconf = $cfg->get_block('imap');
 my $sep = $imapconf->{sep};
 my $cyrus_server = $imapconf->{server};
@@ -81,7 +81,6 @@ my $auth = {
 if ( ($client = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
 	exit(255);
 }
-
 
 printf "\n\n\e[33m".'%-30.30s  %-9s %-9s %-8s %-27s %-27s %-12s %-3s'."\e[39m\n", 'Mailbox','Used','Quota','Used(%)','LastIMAPupdate','Lastpop','Partition', 'Expire';
 for ($c=0;$c<$i;$c++) {

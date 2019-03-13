@@ -28,7 +28,7 @@ $usage .= "\t\t type NOTIME for no time limits in place of <n><udm>\n\n";
 
 use Config::Simple;
 my $cfg = new Config::Simple();
-$cfg->read('cyr_scripts.ini');
+$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
 my $imapconf = $cfg->get_block('imap');
 my $restconf = $cfg->get_block('restore');
 my $cyrus_server = $imapconf->{server};

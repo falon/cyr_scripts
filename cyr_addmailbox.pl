@@ -35,7 +35,7 @@ if (($#ARGV < 1) || ($#ARGV > 3)) {
 
 use Config::Simple;
 my $cfg = new Config::Simple();
-$cfg->read('cyr_scripts.ini');
+$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
 my $imapconf = $cfg->get_block('imap');
 my $sep = $imapconf->{sep};
 my $cyrus_server = $imapconf->{server};

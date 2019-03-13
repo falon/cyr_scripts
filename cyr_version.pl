@@ -6,7 +6,7 @@ use Config::Simple;
 my $verbose = 0;
 my $logproc = 'cyrVersion';
 my $cfg = new Config::Simple();
-$cfg->read('cyr_scripts.ini');
+$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
 my $imapconf = $cfg->get_block('imap');
 my $cyrus_server = $imapconf->{server};
 my $sep = $imapconf->{sep};
