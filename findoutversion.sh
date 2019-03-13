@@ -1,4 +1,5 @@
 #!/bin/bash
+LPATH=/usr/local/cyr_scripts
 VER=`rpm -qa | grep cyrus-imapd-utils`
 RE='^cyrus-imapd-utils-([[:digit:]])\.'
 
@@ -9,5 +10,5 @@ fi
 
 if [ $VERSION -gt 1 ]
 then
-	cp -p cyr_showuser.pl-v$VERSION cyr_showuser.pl
+	cp -p $LPATH/cyr_showuser.pl-v$VERSION $LPATH/cyr_showuser.pl
 fi
