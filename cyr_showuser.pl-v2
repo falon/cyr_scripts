@@ -60,7 +60,7 @@ my $sep = $imapconf->{sep};
 my $cyrus_server = $imapconf->{server};
 my $cyrus_user = $imapconf->{user};
 my $cyrus_pass = $imapconf->{pass};
-require "/opt/cyr_scripts/core.pl";
+require "/usr/local/cyr_scripts/core.pl";
 
 #
 # assuming all necessary variables have been declared and filled accordingly:
