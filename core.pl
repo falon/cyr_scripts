@@ -232,9 +232,15 @@ sub renameMailbox {
   use Encode;
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
+  my $plog = '';
   openlog("$mainproc/renMbox", "pid", LOG_MAIL);
 
-  if ($partition eq '') { undef $partition; }
+  if ($partition eq '') {
+	  undef $partition;
+  }
+  else {
+	  $plog = "partition=$partition ";
+  }
 
   $mailbox_old = composembx($user_old, $folder_old, $sep, 'user');
   $mailbox_new = composembx($user_new, $folder_new, $sep, 'user');
@@ -245,17 +251,13 @@ sub renameMailbox {
   $folder_old = decodefoldername($folder_old, $imaputf7, $code);
   $folder_new = decodefoldername($folder_new, $imaputf7, $code);
   if ($cyrus->error) {
-    printLog('LOG_WARNING',"action=renmailbox status=fail mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" partition=$partition error=\"" . $cyrus->error . '"', $v);
+    printLog('LOG_WARNING',"action=renmailbox status=fail mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" ${plog}error=\"" . $cyrus->error . '"', $v);
   } else {
-	if (!defined $partition) {
-		printLog('LOG_WARNING',"action=renmailbox status=success mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\"", $v);
-	}
-	else {
-		printLog('LOG_WARNING',"action=renmailbox status=success mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" partition=$partition", $v);
-	}
+    printLog('LOG_WARNING',"action=renmailbox status=success mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" $plog", $v);
   }
   closelog();
 }
+
 
 sub renameFolder {
 # Rename folder at normal user level authorization.
