@@ -3,7 +3,7 @@
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
 #########  Build release  #########
-our $build = '0.1.3 - 13 Mar 2019';
+our $build = '0.1.4 - 25 Mar 2019';
 ###################################
 
 
@@ -147,7 +147,7 @@ sub cyrusconnect {
                 $cyrus = 0;
 	}
 	else {
-		printLog('LOG_DEBUG',"action=cyrusconnect status=success server=$Server mailHost=$Server",$v);
+		printLog('LOG_DEBUG',"action=cyrusconnect status=success server=$Server mailHost=$Server user=".$auth->{-user}.' authz='.$auth->{-authz},$v);
 	}
 	closelog();
 	return $cyrus;
@@ -257,6 +257,101 @@ sub renameMailbox {
   closelog();
 }
 
+sub renameFolder {
+# Rename folder at normal user level authorization.
+# If folder_old is INBOX, rename INBOX and all folders
+# at INBOX level hierarchy.
+
+	use Sys::Syslog;
+	my ($mainproc, $cyrus, $folder_old, $folder_new, $partition, $sep, $v) = @_;
+		# folder_old = folder name excluding 'INBOX/', or INBOX
+		# folder_new = folder name excluding 'INBOX/'
+
+	use Unicode::IMAPUtf7;
+	use Encode;
+	my $code = 'ISO-8859-1';
+	my $plog = '';
+	my $imaputf7 = Unicode::IMAPUtf7->new();
+        if ($partition eq '') {
+		undef $partition;
+	}
+	else {
+		$plog = "partition=$partition ";
+	}
+	openlog("$mainproc/renFold", "pid", LOG_MAIL);
+	if ( $folder_new eq 'INBOX' ) {
+		printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_old\" newfolder=\"$folder_new\" ${plog}error=\"Can't rename <$folder_old> in destination folder <INBOX>. Choose a destination folder different than INBOX.\"", $v);
+		return 0;
+	}
+	## Non INBOX folder ##
+	if ($folder_old ne 'INBOX') {
+		if (defined $partition) { $cyrus->rename('INBOX'.$sep.$folder_old, 'INBOX'.$sep.$folder_new, $partition); }
+		else { $cyrus->rename('INBOX'.$sep.$folder_old, 'INBOX'.$sep.$folder_new); }
+		$folder_old = decodefoldername($folder_old, $imaputf7, $code);
+		$folder_new = decodefoldername($folder_new, $imaputf7, $code);
+		if ($cyrus->error) {
+			printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_old\" newfolder=\"$folder_new\" ${plog}error=\"" . $cyrus->error . '"', $v);
+			return 0;
+		} else {
+			printLog('LOG_WARNING',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
+			return 1;
+		}
+	}
+	else {
+		## Rename of INBOX folder ##
+		# Discover all root mailboxes of user
+		# Excluding destination root folder
+		my @folders = $cyrus->listmailbox('INBOX'.$sep.'%');
+		my @comp = split (/$sep/,$folder_new);
+		my $filt = 'INBOX'.$sep.$comp[0];
+		my $cVer = cyrusVersion($cyrus);
+		for ($f=0;$f<=$#folders;$f++) {
+			if ( $folders[$f][0] =~ /^$filt/ ) {
+				next;
+			}
+                        my @path = split (/$sep/,$folders[$f][0]);
+			my $leaf = $path[$#path];
+                        $folder_oldL = decodefoldername($folders[$f][0], $imaputf7, $code);
+			$folder_oldL =~ s/^INBOX\///;
+			$folder_newL = decodefoldername($folder_new.$sep.$leaf, $imaputf7, $code);
+
+			# Deletion of specialuse flags, if any #
+			if ( $cVer =~ /^3/ ) {
+				# We delete all specialuse flags which deny the RENAME or DELETE command.
+				# The metadata is /private/specialuse, it applies NIL to unset (rfc6154).
+				$cyrus->setmetadata($folders[$f][0], 'specialuse', 'none', 1);
+				if ($cyrus->error) {
+					printLog('LOG_WARNING',"action=set_specialuse folder=\"$folder_oldL\" value=NIL error=\"" . $cyrus->error . '"', $v);
+				}
+			}
+
+			if (defined $partition) { $cyrus->rename($folders[$f][0], 'INBOX'.$sep.$folder_new.$sep.$leaf, $partition); }
+			else { $cyrus->rename($folders[$f][0], 'INBOX'.$sep.$folder_new.$sep.$leaf); }
+			## Log
+			if ($cyrus->error) {
+                        	printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_oldL\" newfolder=\"$folder_newL\" ${plog}error=\"" . $cyrus->error . '"', $v);
+                	} else {
+				printLog('LOG_WARNING',"action=renfolder status=success folder=\"$folder_oldL\" newfolder=\"$folder_newL\" ${plog}", $v);
+                	}
+		}
+		# Oh yes, INBOX too
+		if ( $cVer =~ /^3/ ) {
+			$cyrus->setmetadata('INBOX', 'specialuse', 'none', 1);
+			if ($cyrus->error) {
+				printLog('LOG_WARNING','action=set_specialuse folder=INBOX value=NIL error="' . $cyrus->error . '"', $v);
+			}
+		}
+		if (defined $partition) { $cyrus->rename($folder_old, 'INBOX'.$sep.$folder_new, $partition); }
+		else { $cyrus->rename($folder_old, 'INBOX'.$sep.$folder_new); }
+		## Log
+                $folder_new = decodefoldername($folder_new, $imaputf7, $code);
+                if ($cyrus->error) {
+                        printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_old\" newfolder=\"$folder_new\" ${plog}error=\"" . $cyrus->error . '"', $v);
+                } else {
+                        printLog('LOG_WARNING',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
+                }
+	}
+}
 
 sub transferMailbox {
 
