@@ -22,6 +22,7 @@
 binary="/usr/local/cyr_scripts/cyr_setPartitionAnno.pl"
 name="cyr_setPartitionAnno.pl"
 PIDFILE="/var/run/cyr_setPartitionAnno/setPartitionAnno.pid"
+PATH="$PATH:/usr/local/cyr_scripts:/usr/lib/cyrus-imapd"
 [ -x $binary ] || exit 0
 
 RETVAL=0

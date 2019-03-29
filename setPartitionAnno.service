@@ -8,6 +8,7 @@ OnFailure=status-email-sysadmin@%n.service
 Type=forking
 User=cyrus
 Group=mail
+Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/local/cyr_scripts:/usr/lib/cyrus-imapd"
 PIDFile=/run/cyr_setPartitionAnno/setPartitionAnno.pid
 ExecStart=/usr/local/cyr_scripts/cyr_setPartitionAnno.pl -d
 ExecReload=/bin/kill -HUP $MAINPID
