@@ -3,7 +3,7 @@
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
 #########  Build release  #########
-our $build = '0.1.4 - 25 Mar 2019';
+our $build = '0.1.5 - 08 Apr 2019';
 ###################################
 
 
@@ -295,7 +295,7 @@ sub renameFolder {
 			printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_old\" newfolder=\"$folder_new\" ${plog}error=\"" . $cyrus->error . '"', $v);
 			return 0;
 		} else {
-			printLog('LOG_WARNING',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
+			printLog('LOG_INFO',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
 			return 1;
 		}
 	}
@@ -333,7 +333,7 @@ sub renameFolder {
 			if ($cyrus->error) {
                         	printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_oldL\" newfolder=\"$folder_newL\" ${plog}error=\"" . $cyrus->error . '"', $v);
                 	} else {
-				printLog('LOG_WARNING',"action=renfolder status=success folder=\"$folder_oldL\" newfolder=\"$folder_newL\" ${plog}", $v);
+				printLog('LOG_INFO',"action=renfolder status=success folder=\"$folder_oldL\" newfolder=\"$folder_newL\" ${plog}", $v);
                 	}
 		}
 		# Oh yes, INBOX too
@@ -350,7 +350,7 @@ sub renameFolder {
                 if ($cyrus->error) {
                         printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_old\" newfolder=\"$folder_new\" ${plog}error=\"" . $cyrus->error . '"', $v);
                 } else {
-                        printLog('LOG_WARNING',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
+                        printLog('LOG_INFO',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
                 }
 	}
 }
@@ -376,7 +376,7 @@ sub transferMailbox {
                 printLog('LOG_WARNING',"action=cyrxfer status=success mailbox=\"$user\" mailHost=$destServer", $v);
         }
         else {
-		printLog('LOG_WARNING',"action=cyrxfer status=success mailbox=\"$user\" mailHost=$destServer partition=$partition", $v);
+		printLog('LOG_INFO',"action=cyrxfer status=success mailbox=\"$user\" mailHost=$destServer partition=$partition", $v);
         }
   }
   closelog();
@@ -511,7 +511,109 @@ sub setAnnotationServer {
   return $return;
 }
 
+sub getPart {
+	my ($mainproc, $cyrus, $user, $subfolder, $sep, $v) = @_;
+	use Sys::Syslog;
 
+	openlog("$mainproc/getPart", "pid", LOG_MAIL);
+	my $part = 'NIL';
+	my $mailbox=composembx($user,$subfolder,$sep,'user');
+	# Return the partition of $mailbox INBOX
+	my $cVer = cyrusVersion($cyrus);
+	if ( $cVer =~ /^3/ ) {
+		my @info = $cyrus->getinfo($mailbox);
+		if ($cyrus->error) {
+         		$status='fail';
+	         	$error=' error="'.$cyrus->error .'"';
+		        $sev='LOG_ERR';
+		}
+		else {
+			$status='success';
+			$sev='LOG_INFO';
+			$error='';
+			for ($j=0;$j<$#info;$j+=2) {
+				$anno{$info[$j]} = $info[$j+1];
+			}
+			$part = $anno{$mailbox}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/partition'};
+		}
+	}
+	if ( $cVer =~ /^(v|)2/ ) {
+		my @info = $cyrus->info($mailbox);
+                if ($cyrus->error or !@info) {
+       			$status='fail';
+			if ( $cyrus->error ) {
+                        	$error=' error="'.$cyrus->error . '"';
+			}
+			else {
+				$error=' error="can\'t determine partition."';
+			}
+                        $sev='LOG_ERR';
+		}
+                else {
+                        $status='success';
+                        $sev='LOG_INFO';
+                        $error='';
+			for ($j=0;$j<$#info;$j+=2) {
+				$anno{$info[$j]} = $info[$j+1];
+			}
+			$part = $anno{'/mailbox/{'.$mailbox.'}/vendor/cmu/cyrus-imapd/partition'};
+
+		}
+	}
+	printLog($sev,"action=getinfo status=$status mailbox=\"$user\" folder=\"$subfolder\" part=${part}${error}", $v);
+	return $part;
+}
+
+sub getDomainPart {
+	my ($mainproc, $cyrus, $user, $v) = @_;
+	use Sys::Syslog;
+	openlog("$mainproc/getDomPart", "pid", LOG_MAIL);
+	my $cVer = cyrusVersion($cyrus);
+	my $part = 'NIL';
+
+	# Read partition domain from Partition Manager metadata
+	my ($uid,$dom) = split('@',$user);
+	my $part_path = "/vendor/CSI/partition/$dom";
+	if ( $cVer =~ /^3/ ) {
+		my @info = $cyrus->getinfo('',$part_path);
+		if ( $info[1]{private}{"/server/$part_path"} ne 'NIL' ) {
+			$part = $info[1]{private}{"/server/$part_path"};
+		}
+	}
+	if ( $cVer =~ /^(v|)2/ ) {
+		# There is a BUG in getinfo when reading server annotations. So...
+		$cyrus->addcallback({-trigger => 'ANNOTATION',
+                        -callback => sub {
+                                my %d = @_;
+                                my $text = $d{-text};
+                                if ($text =~ /\"\Q$part_path\E\"\s+\(\"value\.priv\"\s+\"(\w+)\"\)/) {
+                                        ${$d{-rock}} = $1;
+                                }
+                        },
+                        -rock => \$part});
+
+        	my ($rc, $msg) = $cyrus->send('', '', 'GETANNOTATION %s %q "value.priv"',
+                                                '', $part_path);
+        	$cyrus->addcallback({-trigger => 'ANNOTATION'});
+        	if ($rc eq 'OK') {
+                	$cyrus->{error} = undef;
+        	} else {
+                	$cyrus->{error} = $msg;
+        	}
+	}
+        if ($cyrus->error) {
+                $status='fail';
+                $error=' error="'.$cyrus->error . '"';
+                $sev='LOG_ERR';
+        }
+        else {
+                $status='success';
+                $sev='LOG_INFO';
+                $error='';
+	}
+	printLog($sev,"action=getinfo status=$status mailbox=\"$user\" domain=$dom part=${part}${error}", $v);
+	return $part;
+}
 
 sub setQuota {
 
@@ -542,8 +644,6 @@ sub setQuota {
 	$before[2][0] = 0;
   }
 
-  #use Data::Dump qw(dump);
-  #dump(@before);
   $cyrus->setquota($mailbox,"STORAGE",$quota_size);
   if ($cyrus->error) {
 	$sev='LOG_ERR';

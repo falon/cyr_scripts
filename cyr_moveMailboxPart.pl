@@ -1,11 +1,5 @@
 #!/usr/bin/perl  -w
 
-# Usage:
-#  -u <user_now> <user_new> [part]         move <user_now> in <user_new> (use form [userSEPuid])
-#					   into new partition <part>
-#  -f <file>				   use a file in the form <user_now> <user_new> [<part>]
-
-
 use Config::Simple;
 my $cfg = new Config::Simple();
 $cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
@@ -23,13 +17,16 @@ require "/usr/local/cyr_scripts/core.pl";
 
 ## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -mboxold <user_now> -folderold <foldernow> -mboxnew <user_new> -foldernew <foldernew> [-p part]\n";
+my $usage  = "\nUsage:\t$0 -mboxold <user_now> -folderold <foldernow> -mboxnew <user_new> -foldernew <foldernew> [-p part] [-autopart] [-oldpart]\n";
 $usage .= "\tmove <foldernow> of <user_now> in <foldernew> of <user_new>\n";
-$usage .= "\tinto new partition <part>\n\n";
+$usage .= "\tinto new partition <part>\n";
+$usage .="\t* or into partition of <mboxnew> domain defined by Partition Manager if -autopart\n";
+$usage .="\t* or into partition of <foldernow> if -oldpart\n";
+$usage .="\t  use either oldpart or autopart, or none. Both are not allowed.\n\n";
 $usage .= "\t $0 -file <file> [-utf7]\n";
 $usage .= "\tread a file with lines in the form <user_now>;<foldernow>;<user_new>;<foldernew>;<part>\n";
 $usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n";
-$usage .= "\t<part> can be the empty or null char if you don't want to change the partition.\n";
+$usage .= "\t<part> can be the empty or null char if you don't want to specify the partition.\n";
 $usage .= "\tie\n\t\tmbox1;folder1;mbox2;folder2;\n\n";
 
 my $auth = {
@@ -49,6 +46,8 @@ my $fdrnew = undef;
 my @folderold = undef;
 my @foldernew = undef;
 my @part= undef;
+my $autopart = 0;
+my $oldpart = 0;
 my $i = 0;
 my $c = 0;
 my $v = 1; #verbosity
@@ -74,11 +73,13 @@ if (! defined($ARGV[0]) ) {
 
 for ( $ARGV[0] ) {
 	if (/^-(-|)mboxold/)  {
-		GetOptions(     'mboxold=s'   => \$mboxold[0],
-				'folderold:s' => \$fdrold,
-				'mboxnew=s'   => \$mboxnew[0],
-				'foldernew:s' => \$fdrnew,
-				'part:s'       => \$part[0]
+		GetOptions(     'mboxold=s'	=> \$mboxold[0],
+				'folderold:s'	=> \$fdrold,
+				'mboxnew=s'	=> \$mboxnew[0],
+				'foldernew:s'	=> \$fdrnew,
+				'part:s'	=> \$part[0],
+				'autopart'	=> \$autopart,
+				'oldpart'	=> \$oldpart	
 		) or die($usage);
 		@ARGV == 0
 			or die("\nToo many arguments.\n$usage");
@@ -149,6 +150,9 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $v)) == 0) {
         exit(255);
 }
 
+use Sys::Syslog;
+openlog("$logproc/master", "pid", LOG_MAIL);
+
 for ($c=0;$c<$i;$c++) {
 
 	if ( $useAccountCheck ) {
@@ -160,5 +164,31 @@ for ($c=0;$c<$i;$c++) {
 			accountIsLogged($logproc, $mboxnew[$c], $procdir, $Tw, $v);
 		}
 	}
+	if ($part[$c] eq '') {
+		if ($oldpart) {
+			# Set partition of moving mailbox in new mailbox
+			$part[$c] = getPart($logproc, $cyrus, $mboxold[$c], $folderold[$c], $sep, $v);
+		}
+        	if ($autopart) {
+			# CSI Partition Manager choice
+			if ($oldpart) {
+				printLog('LOG_ERR', "action=renmailbox status=fail mailbox=${mboxold[$c]} folder=\"${folderold[$c]}\" newmailbox=${mboxnew[$c]} newfolder=\"${foldernew[$c]}\" partition=${part[$c]} error=\"You define both oldpart and autopart. Not allowed. Exiting without any changes.\"",$v);
+				exit(255);
+			}
+			$part[$c] = getDomainPart($logproc, $cyrus, $mboxnew[$c], $v);
+		}
+	}
+	else {
+		if ($oldpart or $autopart) {
+			printLog('LOG_WARNING', "action=renmailbox status=notice mailbox=${mboxold[$c]} folder=\"${folderold[$c]}\" newmailbox=${mboxnew[$c]} newfolder=\"${foldernew[$c]}\" partition=${part[$c]} detail=\"You define explicit partition name, but some partitions flag too. Explicit declaration takes precedence.\"", $v);
+		}
+	}
+	if ($part[$c] eq 'NIL') {
+		printLog('LOG_ERR', "action=renmailbox status=fail mailbox=${mboxold[$c]} folder=\"${folderold[$c]}\" newmailbox=${mboxnew[$c]} newfolder=\"${foldernew[$c]}\" partition=${part[$c]} error=\"An error occurred defining partition by oldpart or autopart flag. Skipping.\"", $v);
+		next;
+	}
+
+	# Oh, finally we can proceed!
 	renameMailbox($logproc, $cyrus ,$mboxold[$c], $folderold[$c], $mboxnew[$c], $foldernew[$c], $part[$c], $sep, $v);
 }
+closelog();
