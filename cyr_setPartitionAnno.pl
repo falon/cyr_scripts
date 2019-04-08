@@ -143,9 +143,9 @@ if ($opt_d) {
                 $continue = 0;
 		openlog($mainproc,'pid','LOG_MAIL');	
                 printLog('LOG_INFO',"action=stop algo=$algo status=notice detail=\"Stopping process\"",$debug);
+		Proc::Daemon::Kill_Daemon($argdaemon{work_dir}.'/'.$argdaemon{pid_file} );
                 unlink $argdaemon{work_dir}.'/'.$argdaemon{pid_file} or
 			printLog('LOG_EMERG',"action=stop algo=$algo status=fail error=\"can't stop\" detail=\"Can't remove ".$argdaemon{pid_file}.'"',$debug);
-                Proc::Daemon::Kill_Daemon($argdaemon{work_dir}.'/'.$argdaemon{pid_file} );
         };
 
         $SIG{HUP}  = sub {
