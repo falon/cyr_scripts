@@ -32,14 +32,15 @@ if (($#ARGV < 1) || ($#ARGV > 5)) {
         exit;
 }
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
 require "/usr/local/cyr_scripts/core.pl";
 use Cyrus::IMAP::Admin;
 
@@ -75,6 +76,7 @@ my @newuser = undef;
 my @partition = undef;
 my @quota_size = undef;
 my $logproc='adduser';
+my $exit = 0;
 my $cyrus;
 
 
@@ -121,13 +123,22 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
 
 for ($c=0;$c<$i;$c++) {
 	print "\n\tAdding User: $newuser[$c]...\n";
-	createMailbox($logproc, $cyrus, $newuser[$c],'INBOX',$partition[$c], $sep, $verbose);
-        setQuota($logproc, $cyrus, $newuser[$c], 'INBOX', $quota_size[$c], $sep, $verbose);
-	createMailbox($logproc, $cyrus, $newuser[$c],'Spam', $partition[$c], $sep, $verbose);
-	setAnnotationMailbox($logproc, $cyrus, $newuser[$c],'Spam', 'expire', $expSpam[$c], $sep, $verbose);
-	setACL($logproc, $cyrus, $newuser[$c],'Spam','anyone','p', $sep, $verbose);
-	setACL($logproc, $cyrus, $newuser[$c],'Spam',$newuser[$c],'lrswipted', $sep, $verbose);
-	createMailbox($logproc, $cyrus, $newuser[$c], 'Trash', $partition[$c], $sep, $verbose);
-	setAnnotationMailbox($logproc, $cyrus, $newuser[$c], 'Trash', 'expire', $expTrash[$c], $sep, $verbose);
+	createMailbox($logproc, $cyrus, $newuser[$c],'INBOX',$partition[$c], $sep, $verbose)
+		or $exit++;
+        setQuota($logproc, $cyrus, $newuser[$c], 'INBOX', $quota_size[$c], $sep, $verbose)
+		or $exit++;
+	createMailbox($logproc, $cyrus, $newuser[$c],'Spam', $partition[$c], $sep, $verbose)
+		or $exit++;
+	setAnnotationMailbox($logproc, $cyrus, $newuser[$c],'Spam', 'expire', $expSpam[$c], $sep, $verbose)
+		or $exit++;
+	setACL($logproc, $cyrus, $newuser[$c],'Spam','anyone','p', $sep, $verbose)
+		or $exit++;
+	setACL($logproc, $cyrus, $newuser[$c],'Spam',$newuser[$c],'lrswipted', $sep, $verbose)
+		or $exit++;
+	createMailbox($logproc, $cyrus, $newuser[$c], 'Trash', $partition[$c], $sep, $verbose)
+		or $exit++;
+	setAnnotationMailbox($logproc, $cyrus, $newuser[$c], 'Trash', 'expire', $expTrash[$c], $sep, $verbose)
+		or $exit++;
 ##	setACL($logproc, $cyrus, $newuser[$c], 'Trash', $newuser[$c], 'lrswipktecd', $sep, $verbose);
 }
+exit($exit);

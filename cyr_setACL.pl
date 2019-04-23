@@ -21,14 +21,17 @@ my $usage  = "\nUsage:\t$0 -u <mailbox> -folder <folder> -uid <user> -right <rig
 $usage .= "\t $0 -file <file>\n";
 $usage .= "\t read a file with lines in the form <mailbox>;<folder>;<user>;<right>.\n\n";
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
+
+my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 use Cyrus::IMAP::Admin;
 use Getopt::Long;
@@ -71,7 +74,7 @@ my @right = undef;
 my $logproc='setACL';
 my $cyrus;
 
-my $code= $cfg->param('code.code');
+my $code= $cfg->val('code','code');
 my $imaputf7 = Unicode::IMAPUtf7->new();
 
 if (! defined($ARGV[0]) ) {
@@ -149,5 +152,7 @@ LOOP: for ($c=0;$c<$i;$c++) {
 		next LOOP;
 	}
 
-	setACL($logproc, $cyrus, $mailbox[$c], $folder[$c], $who[$c], $right[$c], $sep, $v);
+	setACL($logproc, $cyrus, $mailbox[$c], $folder[$c], $who[$c], $right[$c], $sep, $v)
+		or $exit++;
 }
+exit($exit);

@@ -9,16 +9,17 @@
 require "/usr/local/cyr_scripts/core.pl";
 
 # Config setting#
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
 # LDAP
-my $ldapconf = $cfg->get_block('ldap');
-my $ldaphost    = $ldapconf->{server};
-my $ldapPort    = $ldapconf->{port};
-my $ldapBase    = $ldapconf->{baseDN};  # Base dn containing whole domains
-my $ldapBindUid = $ldapconf->{user};
-my $ldapBindPwd = $ldapconf->{pass};
+my $ldaphost    = $cfg->val('ldap','server');
+my $ldapPort    = $cfg->val('ldap','port');
+my $ldapBase    = $cfg->val('ldap','baseDN');  # Base dn containing whole domains
+my $ldapBindUid = $cfg->val('ldap','user');
+my $ldapBindPwd = $cfg->val('ldap','pass');
 
 
 ## Change nothing below, if you are a stupid user! ##
@@ -55,9 +56,9 @@ if (($#ARGV < 1) || ($#ARGV > 1)) {
 # assuming all necessary variables have been declared and filled accordingly:
 #
 
-$return = 0;
+my $exit = 0;
 for ($c=0;$c<$i;$c++) {
-		$return += ldapCheckUserExists($logproc,$ldaphost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$user[$c],$verbose);
+		ldapCheckUserExists($logproc,$ldaphost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$user[$c],$verbose)
+			or $exit++;
 }
-
-exit( $return );
+exit( $exit );

@@ -16,26 +16,26 @@ if ($#ARGV > 0) {
         exit;
 }
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
 
 require "/usr/local/cyr_scripts/core.pl";
 
 #
 # CONFIGURATION PARAMS
 #
-my $annoconf = $cfg->get_block('partition'); 
 my $mainproc = 'setPartAn';
-my $debug = $annoconf->{debug};
-my $th = $annoconf->{threshold};
-my $Tc = $annoconf->{tc};
-my $algo = $annoconf->{algo};
+my $debug = $cfg->val('partition','debug');
+my $th = $cfg->val('partition','threshold');
+my $Tc = $cfg->val('partition','tc');
+my $algo = $cfg->val('partition','algo');
 my $df= `which cyr_df`;
 
 my %optDom = (

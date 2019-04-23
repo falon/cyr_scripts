@@ -9,6 +9,7 @@
 my $logproc = 'setquota';
 my $logfac = 'LOG_MAIL';
 my $verbose = 1;
+my $exit = 0;
 
 
 ## Change nothing below, if you are a stupid user! ##
@@ -27,7 +28,7 @@ my $cyrus;
 
 if (($#ARGV < 1) || ($#ARGV > 3)) {
 	print $usage;
-	exit;
+	exit(1);
 }
 
 
@@ -68,14 +69,16 @@ use Cyrus::IMAP::Admin;
 # assuming all necessary variables have been declared and filled accordingly:
 #
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
+
 require "/usr/local/cyr_scripts/core.pl";
 
 my $auth = {
@@ -93,5 +96,7 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
 }
 
 for ($c=0;$c<$i;$c++) {
-		setQuota($logproc, $cyrus, $user[$c], $folder[$c], $quota[$c], $sep, $verbose);
+		setQuota($logproc, $cyrus, $user[$c], $folder[$c], $quota[$c], $sep, $verbose)
+			or $exit++;
 }
+exit($exit);

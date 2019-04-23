@@ -1,7 +1,7 @@
 ## Configuration file for cyr scripts
 
 [imap]
-sep	= "/"
+sep	= /
 server	= localhost
 user	= cyrusadmin
 pass	= cyrusadmin
@@ -9,13 +9,13 @@ pass	= cyrusadmin
 [ldap]
 server	= ldap.example.com
 port	= 389
-baseDN	= "cn=en"
-user	= "uid=admin,cn=en"
+baseDN	= cn=en
+user	= uid=admin,cn=en
 pass	= ldapassword
 
 [logintest]
 active	= 0
-procdir = "/run/cyrus/proc"
+procdir = /run/cyrus/proc
 Tw	= 60
 
 [code]

@@ -32,29 +32,29 @@ if (($#ARGV == 0)||($#ARGV == 2)) { print $usage; die("Specify all parameters yo
 #
 # CONFIGURATION PARAMS
 #
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $ldapconf = $cfg->get_block('ldap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
 
-my $ldapHost    = $ldapconf->{server};
-my $ldapPort    = $ldapconf->{port};
-my $ldapBase    = $ldapconf->{baseDN};  # Base dn containing whole domains
-my $ldapBindUid = $ldapconf->{user};
-my $ldapBindPwd = $ldapconf->{pass};
+my $ldapHost    = $cfg->val('ldap','server');
+my $ldapPort    = $cfg->val('ldap','port');
+my $ldapBase    = $cfg->val('ldap','baseDN');  # Base dn containing whole domains
+my $ldapBindUid = $cfg->val('ldap','user');
+my $ldapBindPwd = $cfg->val('ldap','pass');
 
-# Why the following test? Because if you specify in Config::Simple
+# Why the following test? Because if you specify in Config
 # grace =
-# then $cfg->param('orphan.grace') become a null array!
-if ( ref($cfg->param('orphan.grace')) eq 'ARRAY') {
+# then $cfg->val('orphan','grace') become a null array!
+if ( ref($cfg->val('orphan','grace')) eq 'ARRAY') {
 	die("$usage\tThe grace parameter is wrong. Check it!\n");
 }
-my $grace = $cfg->param('orphan.grace');
+my $grace = $cfg->val('orphan','grace');
 my $verbose = 1;
 
 #
@@ -101,4 +101,6 @@ require "/usr/local/cyr_scripts/core.pl";
 my $ok = removeDelUser ( $logproc, $ldapHost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_server,$cyrus_user,$cyrus_pass,$grace, $sep, $verbose );
 if (!$ok) {
 	print "\n\n\e[33mSome errors occur. Please, see urgently the logs.\e[39m\n\n";
+	exit(255);
 }
+exit(0);

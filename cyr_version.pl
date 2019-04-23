@@ -2,16 +2,17 @@
 
 use strict;
 use vars qw($build);
-use Config::Simple;
 my $verbose = 0;
 my $logproc = 'cyrVersion';
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $cyrus_server = $imapconf->{server};
-my $sep = $imapconf->{sep};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
 my $client;
 require "/usr/local/cyr_scripts/core.pl";
 

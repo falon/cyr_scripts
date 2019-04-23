@@ -1,15 +1,15 @@
 #!/usr/bin/perl  -w
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
-my $codeconf = $cfg->get_block('code');
-my $logincheck = $cfg->get_block('logintest');
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
+my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 
 # Config setting#
@@ -53,17 +53,17 @@ my $c = 0;
 my $v = 1; #verbosity
 my $logproc = 'renameMailbox';
 ## Parameter used to check if an account is logged in
-my $procdir = $logincheck->{procdir};
+my $procdir = $cfg->val('logintest','procdir');
 # Interval time to check if account is logged
-my $Tw =  $logincheck->{Tw};
+my $Tw =  $cfg->val('logintest','Tw');
 # Set 1 to check if account is logged in before move folders
-my $useAccountCheck =  $logincheck->{active};
+my $useAccountCheck =  $cfg->val('logintest','active');
 
 
 use Getopt::Long;
 use Unicode::IMAPUtf7;
 use Encode;
-my $code=$codeconf->{code};
+my $code=$cfg->val('code','code');
 my $imaputf7 = Unicode::IMAPUtf7->new();
 my $utf7 = 0;
 
@@ -185,10 +185,13 @@ for ($c=0;$c<$i;$c++) {
 	}
 	if ($part[$c] eq 'NIL') {
 		printLog('LOG_ERR', "action=renmailbox status=fail mailbox=${mboxold[$c]} folder=\"${folderold[$c]}\" newmailbox=${mboxnew[$c]} newfolder=\"${foldernew[$c]}\" partition=${part[$c]} error=\"An error occurred defining partition by oldpart or autopart flag. Skipping.\"", $v);
+		$exit++;
 		next;
 	}
 
 	# Oh, finally we can proceed!
-	renameMailbox($logproc, $cyrus ,$mboxold[$c], $folderold[$c], $mboxnew[$c], $foldernew[$c], $part[$c], $sep, $v);
+	renameMailbox($logproc, $cyrus ,$mboxold[$c], $folderold[$c], $mboxnew[$c], $foldernew[$c], $part[$c], $sep, $v)
+		or $exit++;
 }
 closelog();
+exit($exit);

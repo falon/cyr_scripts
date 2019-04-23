@@ -17,14 +17,17 @@ if ($#ARGV != 2) {
 }
 
 use Mail::IMAPTalk;
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
+
+my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 
 #
@@ -66,15 +69,17 @@ $IMAP = Mail::IMAPTalk->new(
       Uid      => 0 );
 $error=$@;
 if (!$IMAP) {
-    printLog('LOG_ERR',"action=imapconnect status=fail error=\"$error\" server=$Server mailHost=$Server",$verbose);
+    printLog('LOG_ERR',"action=imapconnect status=fail error=\"$error\" server=$cyrus_server mailHost=$cyrus_server",$verbose);
+    $exit = 255;
 }
 
 $read=$IMAP->getannotation($path,$anno,"*");
 $error=$@;
 if (!$read) {
-	printLog('LOG_ERR',"action=imapread status=fail error=\"$error\" server=$Server mailHost=$Server",$verbose);
+	printLog('LOG_ERR',"action=imapread status=fail error=\"$error\" server=$cyrus_server mailHost=$cyrus_server",$verbose);
 	$IMAP->close();
 	closelog();
+	$exit = 1;
 }
 
 use Data::Dumper;
@@ -82,3 +87,4 @@ $Data::Dumper::Terse = 1;
 print Dumper $read;
 $IMAP->close();
 closelog();
+exit($exit);

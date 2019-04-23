@@ -8,17 +8,18 @@
 use Getopt::Long;
 use Unicode::IMAPUtf7;
 use Encode;
-use Config::Simple;
+use Config::IniFiles;
 
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
-my $codeconf = $cfg->get_block('code');
-my $logincheck = $cfg->get_block('logintest');
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
+
+my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 
 my $usage  = "\nUsage:\t$0 -user <user> -folder <folder> [-p part]\n";
@@ -40,13 +41,13 @@ my $c = 0;
 my $v = 1; #verbosity
 my $logproc = 'renameINBOX';
 ## Parameter used to check if an account is logged in
-my $procdir = $logincheck->{procdir};
+my $procdir = $cfg->val('logintest','procdir');
 # Interval time to check if account is logged
-my $Tw =  $logincheck->{Tw};
+my $Tw =  $cfg->val('logintest','Tw');
 # Set 1 to check if account is logged in before move folders
-my $useAccountCheck =  $logincheck->{active};
+my $useAccountCheck =  $cfg->val('logintest','active');
 
-my $code=$codeconf->{code};
+my $code=$cfg->val('code','code');
 my $imaputf7 = Unicode::IMAPUtf7->new();
 my $utf7 = 0;
 
@@ -123,6 +124,7 @@ for ($c=0;$c<$i;$c++) {
 		-password => $cyrus_pass,
 	};
 	if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $v)) == 0) {
+			$exit++;
 		        next;
 	}
 
@@ -130,6 +132,8 @@ for ($c=0;$c<$i;$c++) {
 		# wait forever if the account is logged!
 		accountIsLogged($logproc, $user[$c], $procdir, $Tw, $v);
 	}
-	renameFolder($logproc, $cyrus, 'INBOX', $folder[$c], $part[$c], $sep, $v);
+	renameFolder($logproc, $cyrus, 'INBOX', $folder[$c], $part[$c], $sep, $v)
+		or $exit++;
 	$cyrus->send(undef, undef, 'LOGOUT');
 }
+exit($exit);

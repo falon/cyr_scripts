@@ -11,36 +11,37 @@
 # Prerequisite: admin uid and password for the two imap server are the same.
 #
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
-my $ldapconf = $cfg->get_block('ldap');
-my $xferconf = $cfg->get_block('xfer');
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
+
+my $ldaphost    = $cfg->val('ldap','server');
+my $ldapPort    = $cfg->val('ldap','port');
+my $ldapBase    = $cfg->val('ldap','baseDN');  # Base dn containing whole domains
+my $ldapBindUid = $cfg->val('ldap','user');
+my $ldapBindPwd = $cfg->val('ldap','pass');
+my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 use URI;
 
 # Config setting#
 
 my $v = 1;	# verbosity to STDOUT
-# LDAP
-my $ldaphost	= $ldapconf->{server};
-my $ldapPort	= $ldapconf->{port};
-my $ldapBase	= $ldapconf->{baseDN};	# Base dn containing whole domains
-my $ldapBindUid	= $ldapconf->{user};
-my $ldapBindPwd	= $ldapconf->{pass};
 # Orig Cyrus Server
-my $origServer	= $xferconf->{origserver}; 			# Cyrus server where relocating from
+my $origServer	= $cfg->val('xfer','origserver'); 			# Cyrus server where relocating from
 # OPEN-XCHANGE
-my $noproxy = $xferconf->{noproxy};
-my $netloc = $xferconf->{netloc};
-my $realm = $xferconf->{realm};
-my $apiuser = $xferconf->{apiuser};
-my $apipwd = $xferconf->{apipwd};
-my $url = URI->new( $xferconf->{url} );
+my $noproxy = $cfg->val('xfer','noproxy');
+my $netloc = $cfg->val('xfer','netloc');
+my $realm = $cfg->val('xfer','realm');
+my $apiuser = $cfg->val('xfer','apiuser');
+my $apipwd = $cfg->val('xfer','apipwd');
+my $url = URI->new( $cfg->val('xfer','url') );
 
 
 
@@ -66,7 +67,7 @@ my $mainproc = 'CyrXfer';
 
 if (($#ARGV < 1) || ($#ARGV > 3)) {
 	print $usage;
-	exit;
+	exit(1);
 }
 
 
@@ -166,13 +167,17 @@ LOOP: for ($c=0;$c<$i;$c++) {
 				}
 				else {
 					print "FAIL in change OX server. See at logs for details.\n";
+					$exit++;
 				} 
 			}
 			else {
 				print "FAIL replacing mailHost over LDAP. See at logs for details.\n";
+				$exit++;
 			}
 		}
 		else {
 			print "FAIL in Cyrus XFER operation.\n";
+			$exit++;
 		}
 }
+exit($exit);

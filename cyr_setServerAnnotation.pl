@@ -18,14 +18,17 @@ if ($#ARGV != 4) {
         exit;
 }
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
+
+my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 use Mail::IMAPTalk;
 use Sys::Syslog;
@@ -77,7 +80,10 @@ $IMAP = Mail::IMAPTalk->new(
 $error=$@;
 if (!$IMAP) {
     printLog('LOG_ERR',"action=imapconnect status=fail error=\"$error\" server=$Server mailHost=$Server",$verbose);
+    $exit = 255;
 }
 
-setAnnotationServer($logproc, $IMAP, $path, $anno, $valuetype, $value, TRUE, $verbose);
+setAnnotationServer($logproc, $IMAP, $path, $anno, $valuetype, $value, TRUE, $verbose)
+	or $exit = 1;
 $IMAP->close();
+exit($exit);

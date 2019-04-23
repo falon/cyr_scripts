@@ -25,15 +25,14 @@ $usage .= "\t\t <udm> = m: minutes, h: hours, d: days, w: weeks (not active for 
 $usage .= "\t\t type INBOX for <folder> root.\n";
 $usage .= "\t\t type NOTIME for no time limits in place of <n><udm>\n\n";
 
-
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $restconf = $cfg->get_block('restore');
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
 
 require "/usr/local/cyr_scripts/core.pl";
 use Cyrus::IMAP::Admin;
@@ -46,8 +45,8 @@ use Getopt::Long;
 #
 $logtag = 'cyrRestore';
 $logfac = 'LOG_MAIL';
-my $localtimecountry = $restconf->{country};
-$rootRestore = $restconf->{rootfolder};
+my $localtimecountry = $cfg->val('restore','country');
+$rootRestore = $cfg->val('restore', 'rootfolder');
 if (defined($rootRestore)) { $nof = "($rootRestore)";}
 else { $nof = ''; }
 
@@ -198,7 +197,7 @@ sub restoreDEL {
 $old_locale = setlocale(LC_CTYPE);
 setlocale(LC_TIME, $localtimecountry);
 my ($syscountry, $code) = split(/\./,$old_locale);
-$code = $cfg->param('code.code');
+$code = $cfg->val('code', 'code');
 if ($syscountry ne $localtimecountry) {
 	printLog('LOG_DEBUG', "action=check status=notice detail=\"You have configured a time country <$localtimecountry> which differs from system country <$syscountry>\"", $verbose);
 }

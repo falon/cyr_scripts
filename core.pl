@@ -3,7 +3,7 @@
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
 #########  Build release  #########
-our $build = '0.1.5 - 08 Apr 2019';
+our $build = '0.1.6 - 23 Apr 2019';
 ###################################
 
 
@@ -136,18 +136,41 @@ sub accountIsLogged {
 
 sub cyrusconnect {
 ## Connect to cyrus server via Cyradm
+## Facility to log Rundeck remote user, if set in ENV
+	#https://docs.rundeck.com/2.11.3/manual/jobs.html#context-variable-usage
 
-	my ($mainproc, $auth, $Server, $v) = @_;	
+	my ($mainproc, $auth, $Server, $v) = @_;
+
+	my $rdlog='';
+	if (defined $ENV{'RD_JOB_USERNAME'}) {
+		$rdlog = ' orig_user="'.$ENV{'RD_JOB_USERNAME'}.'"';
+	}
+	if (defined $ENV{'RD_JOB_EXECID'}) {
+		$rdlog .= ' rd_execid="'.$ENV{'RD_JOB_EXECID'}.'"';
+	}
+	if (defined $ENV{'RD_JOB_EXECUTIONTYPE'}) {
+		$rdlog .= ' rd_exectype="'.$ENV{'RD_JOB_EXECUTIONTYPE'}.'"';
+	}
+	if (defined $ENV{'RD_JOB_ID'}) {
+		$rdlog .= ' rd_id="'.$ENV{'RD_JOB_ID'}.'"';
+	}
+	if (defined $ENV{'RD_JOB_NAME'}) {
+		$rdlog .= ' rd_name="'.$ENV{'RD_JOB_NAME'}.'"';
+	}
 
 	use Sys::Syslog;
 	openlog("$mainproc/cyrusconn",'pid','LOG_MAIL');
 	my $cyrus = Cyrus::IMAP::Admin->new($Server);
-        if (! $cyrus->authenticate(%$auth) ) {
-        	printLog('LOG_ALERT',"action=cyrusconnect status=fail error=\"Errors happen during authentication\" server=$Server mailHost=$Server",$v);
+	if ( !defined $cyrus ) {
+		printLog('LOG_ALERT','action=cyrusconnect status=fail error="Connection error"' . " server=$Server mailHost=${Server}${rdlog}",$v);
+		$cyrus = 0;
+	}
+	elsif ( !$cyrus->authenticate(%$auth) ) {
+        	printLog('LOG_ALERT','action=cyrusconnect status=fail error="'. $cyrus->error . "\" server=$Server mailHost=${Server}${rdlog}",$v);
                 $cyrus = 0;
 	}
 	else {
-		printLog('LOG_DEBUG',"action=cyrusconnect status=success server=$Server mailHost=$Server user=".$auth->{-user}.' authz='.$auth->{-authz},$v);
+		printLog('LOG_DEBUG',"action=cyrusconnect status=success server=$Server mailHost=$Server user=".$auth->{-user}.' authz='.$auth->{-authz} . $rdlog, $v);
 	}
 	closelog();
 	return $cyrus;
@@ -186,19 +209,30 @@ sub createMailbox {
   my ($mainproc, $cyrus, $user, $subfolder, $partition, $sep, $v) = @_;
 
   my $code = 'ISO-8859-1';
+  my $status;
+  my $error;
+  my $return;
+  my $severity;
   my $imaputf7 = Unicode::IMAPUtf7->new();
   my $mailbox=composembx($user,$subfolder,$sep,'user');
   $cyrus->create($mailbox,$partition);
   openlog("$mainproc/addMbox", "pid", LOG_MAIL);
   $folder = decodefoldername($subfolder, $imaputf7, $code);
   if ($cyrus->error) {
-    printLog('LOG_WARNING',"action=addmailbox mailbox=\"". $user."\" folder=\"$folder\" partition=\"$partition\" error=\"". $cyrus->error .'" status=fail', $v);
+	$status = 'fail';
+	$severity = 'LOG_WARNING';
+	$return = 0;
+	$error = ' error="'.$cyrus->error . '"';
   } else {
-    if (!defined($partition)) {$partition='root partition of mailbox or autoselected by Cyrus';}
-    printLog('LOG_WARNING',"action=addmailbox status=success mailbox=\"$user\" folder=\"$folder\" partition=\"$partition\"", $v);
+	$status = 'success';
+	$severity = 'LOG_INFO';
+	$return = 1;
+	$error = '';
   }
+  if (!defined($partition)) {$partition='root partition of mailbox or autoselected by Cyrus';}
+  printLog($severity, "action=addmailbox status=$status mailbox=\"$user\" folder=\"$folder\" part=\"$partition\"${error}", $v);
   closelog();
-
+  return $return;
 }
 
 sub deleteMailbox {
@@ -206,21 +240,31 @@ sub deleteMailbox {
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
   use Encode;
+  my $status;
+  my $error;
+  my $return;
+  my $severity;
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
   my ($mainproc, $cyrus, $user, $subfolder, $sep, $v) = @_;
   my $mailbox=composembx($user,$subfolder,$sep,'user');
   openlog("$mainproc/delMbox", "pid", LOG_MAIL);
-    $cyrus->delete('user'. $sep . $user);
+  $cyrus->delete('user'. $sep . $user);
   $folder = decodefoldername($subfolder, $imaputf7, $code);
   if ($cyrus->error) {
-    printLog('LOG_WARNING',"action=delmailbox status=fail mailbox=\"$user\" folder=\"$folder\" error=\"".$cyrus->error.'"', $v);
-    return 0;
+	  $status = 'fail';
+	  $severity = 'LOG_WARNING';
+	  $return = 0;
+	  $error = ' error="'.$cyrus->error . '"';
   } else {
-    printLog('LOG_WARNING',"action=delmailbox status=success mailbox=\"$user\" folder=\"$folder\"", $v);
-    return 1;
+	  $status = 'success';
+	  $severity = 'LOG_INFO';
+	  $return = 1;
+	  $error = '';
   }
+  printLog($severity,"action=delmailbox status=$status mailbox=\"$user\" folder=\"$folder\"${error}", $v);
   closelog();
+  return $return;
 }
 
 
@@ -233,13 +277,17 @@ sub renameMailbox {
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
   my $plog = '';
+  my $status;
+  my $error;
+  my $return;
+  my $severity;
   openlog("$mainproc/renMbox", "pid", LOG_MAIL);
 
   if ($partition eq '') {
 	  undef $partition;
   }
   else {
-	  $plog = "partition=$partition ";
+	  $plog = "part=$partition ";
   }
 
   $mailbox_old = composembx($user_old, $folder_old, $sep, 'user');
@@ -247,15 +295,22 @@ sub renameMailbox {
 
   if (defined $partition) { $cyrus->rename($mailbox_old, $mailbox_new, $partition); }
   else { $cyrus->rename($mailbox_old, $mailbox_new); }
-
+  if ($cyrus->error) {
+          $status = 'fail';
+          $severity = 'LOG_WARNING';
+          $return = 0;
+          $error = ' error="'.$cyrus->error . '"';
+  } else {
+          $status = 'success';
+          $severity = 'LOG_INFO';
+          $return = 1;
+          $error = '';
+  }
   $folder_old = decodefoldername($folder_old, $imaputf7, $code);
   $folder_new = decodefoldername($folder_new, $imaputf7, $code);
-  if ($cyrus->error) {
-    printLog('LOG_WARNING',"action=renmailbox status=fail mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" ${plog}error=\"" . $cyrus->error . '"', $v);
-  } else {
-    printLog('LOG_WARNING',"action=renmailbox status=success mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" $plog", $v);
-  }
+  printLog($severity,"action=renmailbox status=$status mailbox=\"$user_old\" folder=\"$folder_old\" newmailbox=\"$user_new\" newfolder=\"$folder_new\" ${plog}${error}", $v);
   closelog();
+  return $return;
 }
 
 
@@ -274,11 +329,12 @@ sub renameFolder {
 	my $code = 'ISO-8859-1';
 	my $plog = '';
 	my $imaputf7 = Unicode::IMAPUtf7->new();
+	my $return = 1;
         if ($partition eq '') {
 		undef $partition;
 	}
 	else {
-		$plog = "partition=$partition ";
+		$plog = "part=$partition ";
 	}
 	openlog("$mainproc/renFold", "pid", LOG_MAIL);
 	if ( $folder_new eq 'INBOX' ) {
@@ -323,6 +379,7 @@ sub renameFolder {
 				# The metadata is /private/specialuse, it applies NIL to unset (rfc6154).
 				$cyrus->setmetadata($folders[$f][0], 'specialuse', 'none', 1);
 				if ($cyrus->error) {
+					$return = 0;
 					printLog('LOG_WARNING',"action=set_specialuse folder=\"$folder_oldL\" value=NIL error=\"" . $cyrus->error . '"', $v);
 				}
 			}
@@ -331,6 +388,7 @@ sub renameFolder {
 			else { $cyrus->rename($folders[$f][0], 'INBOX'.$sep.$folder_new.$sep.$leaf); }
 			## Log
 			if ($cyrus->error) {
+				$return = 0;
                         	printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_oldL\" newfolder=\"$folder_newL\" ${plog}error=\"" . $cyrus->error . '"', $v);
                 	} else {
 				printLog('LOG_INFO',"action=renfolder status=success folder=\"$folder_oldL\" newfolder=\"$folder_newL\" ${plog}", $v);
@@ -340,6 +398,7 @@ sub renameFolder {
 		if ( $cVer =~ /^3/ ) {
 			$cyrus->setmetadata('INBOX', 'specialuse', 'none', 1);
 			if ($cyrus->error) {
+				$return = 0;
 				printLog('LOG_WARNING','action=set_specialuse folder=INBOX value=NIL error="' . $cyrus->error . '"', $v);
 			}
 		}
@@ -348,39 +407,53 @@ sub renameFolder {
 		## Log
                 $folder_new = decodefoldername($folder_new, $imaputf7, $code);
                 if ($cyrus->error) {
+			$return = 0;
                         printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_old\" newfolder=\"$folder_new\" ${plog}error=\"" . $cyrus->error . '"', $v);
                 } else {
                         printLog('LOG_INFO',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
                 }
 	}
+	return $return;
 }
+
 
 sub transferMailbox {
 
   use Sys::Syslog;
   my ($mainproc, $cyrus, $user, $destServer, $partition, $sep, $v) = @_;
+  my $plog;
+  my $status;
+  my $severity;
+  my $return;
+  my $error;
+
   openlog("$mainproc/xferMbox", "pid", LOG_MAIL);
   if ($partition eq '') { undef $partition; }
 
   $mailbox = "user". $sep . $user;
 
-  if (defined $partition) { $cyrus->xfermailbox($mailbox, $destServer, $partition); }
-  else { $cyrus->xfermailbox($mailbox, $destServer); }
-
-  if ($cyrus->error) {
-    syslog('LOG_WARNING',"action=cyrxfer status=fail mailbox=\"$user\" error=\"". $cyrus->error . '"', $v);
-    closelog();
-    return 0;
-  } else {
-        if (!defined $partition) {
-                printLog('LOG_WARNING',"action=cyrxfer status=success mailbox=\"$user\" mailHost=$destServer", $v);
-        }
-        else {
-		printLog('LOG_INFO',"action=cyrxfer status=success mailbox=\"$user\" mailHost=$destServer partition=$partition", $v);
-        }
+  if (defined $partition) {
+	$cyrus->xfermailbox($mailbox, $destServer, $partition);
+	$plog = "part=$partition ";
   }
+  else {
+	$cyrus->xfermailbox($mailbox, $destServer);
+	$plog = '';
+  }
+  if ($cyrus->error) {
+          $status = 'fail';
+          $severity = 'LOG_WARNING';
+          $return = 0;
+          $error = 'error="'.$cyrus->error . '"';
+  } else {
+          $status = 'success';
+          $severity = 'LOG_INFO';
+          $return = 1;
+          $error = '';
+  }
+  syslog($severity,"action=cyrxfer status=$status mailbox=\"$user\" ${plog}${error}", $v);
   closelog();
-  return 1;
+  return $return;
 }
 
 
@@ -427,6 +500,10 @@ sub setAnnotationMailbox {
   use Unicode::IMAPUtf7;
   use Encode;
   my $folder;
+  my $status;
+  my $sev;
+  my $return;
+  my $error;
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
   openlog("$mainproc/setAnMbox", "pid", LOG_MAIL);
@@ -436,7 +513,7 @@ sub setAnnotationMailbox {
   $cyrus->mboxconfig($mailbox,$attr,$value);
   if ($cyrus->error) {
 	$status='fail';
-	$error=$cyrus->error;
+	$error=' error=' . $cyrus->error .'"';
 	$sev='LOG_ERR';
 	$return=0;
   }
@@ -446,9 +523,9 @@ sub setAnnotationMailbox {
 	$return=1;
 	$error='';
   } 
-  printLog($sev,"action=setimapmetadata status=$status mailbox=\"$user\" folder=\"$folder\" meta_name=\"$attr\" meta_value=\"$value\" error=\"$error\"", $v);
+  printLog($sev,"action=setimapmetadata status=$status mailbox=\"$user\" folder=\"$folder\" meta_name=\"$attr\" meta_value=\"$value\"${error}", $v);
   closelog();
-  return($return);
+  return $return;
 }
 
 
@@ -458,10 +535,10 @@ sub setAnnotationServer {
   my ($mainproc, $imap, $path, $anno, $valuetype, $value, $v) = @_;
   openlog("$mainproc/setAnServer", "pid", LOG_MAIL);
 
-  $return=1;
-  $error='';
-  $detail=$error;
-  $sev='LOG_INFO';
+  my $return=1;
+  my $error='';
+  my $detail=$error;
+  my $sev='LOG_INFO';
   # Check for ascii value, else exit
   if (!checkascii($value)) {
 	$error='values is not ASCII';
@@ -666,8 +743,8 @@ sub setQuota {
   return $return;
 }
 
-sub setACL {
 
+sub setACL {
   my ($mainproc, $cyrus, $user,$subfolder,$who,$right, $sep, $v) = @_;
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
@@ -696,10 +773,10 @@ sub setACL {
   printLog($sev,"action=setimapacl status=$status error=\"$error\" mailbox=\"$user\" folder=\"$folder\" uid=$who right=$right", $v);
   closelog();
   return $return;
-} 
+}
+
 
 sub listACL {
-
   my ($mainproc, $cyrus, $user,$subfolder,$who, $sep, $v) = @_;
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
@@ -708,7 +785,6 @@ sub listACL {
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
   openlog("$mainproc/listACL", "pid", LOG_MAIL);
-
 
   $mailbox=composembx($user,$subfolder,$sep,'user');
   %$acl= $cyrus->listaclmailbox($mailbox);
@@ -741,7 +817,6 @@ sub listACL {
 
 
 sub ldapReplaceMailhost {
-
 	use Net::LDAP;
 	use Sys::Syslog;
 
@@ -819,8 +894,8 @@ sub ldapReplaceMailhost {
 	return 1;
 }
 
-sub prepareXferDomain {
 
+sub prepareXferDomain {
 	use Net::LDAP;
 	use Sys::Syslog;
         my ($mainproc, $ldapServer,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$domain,$origServer,$destServer,$part,$v) = @_;
@@ -846,8 +921,6 @@ sub prepareXferDomain {
                 closelog();
                 return 0;
         }
-
-
         $nret = $mesg->count;
 	print "$nret mailboxes found!\n";
         printLog('LOG_INFO', "action=ldapsearch status=success domain=$domain origMailHost=$origServer mailHost=$destServer part=$part nMailbox=$nret",$v);
@@ -867,7 +940,6 @@ sub prepareXferDomain {
 
 
 sub delRemovedUser {
-
         use Net::LDAP;
 	use Cyrus::IMAP::Admin;
         use Sys::Syslog;
@@ -1025,7 +1097,7 @@ sub removeDelUser {
 		$error='REGULAR EXIT - No removable mailboxes found';
                 printLog('LOG_INFO',"action=ldapsearch status=success detail=\"$error\" server=$ldapServer port=$ldapPort bind=\"$ldapBindUid\"",0);
                 closelog();
-                return 0;
+                return 1;
         }
 	else {
 		$error="$nret deleted mailboxes found";
@@ -1083,7 +1155,7 @@ sub removeDelUser {
 		}
 
 		print "\t$status";
-		if ($status=='fail') {
+		if ($status eq 'fail') {
 			$return = 0;
 		}
         }
@@ -1158,6 +1230,7 @@ sub ldapModAttr {
         $mesg = $ldap->unbind;   # take down session
         $ldap->disconnect ($ldapServer, port => $ldapPort);
         closelog();
+	return 1;
 }
 
 
@@ -1210,6 +1283,7 @@ sub prepareIMAPXferDomain {
         $mesg = $ldap->unbind;   # take down session
         $ldap->disconnect ($ldapServer, port => $ldapPort);
         closelog();
+	return 1;
 }
 
 # by Paolo Cravero 20131009

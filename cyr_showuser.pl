@@ -14,7 +14,7 @@ $usage .= "\n\n";
 
 my @user = undef;
 my $thq = undef;
-my $i = 0;
+my $i = 1;
 my $c = 0;
 
 use Getopt::Std;
@@ -24,11 +24,9 @@ getopts("hu:d:q:p:", \%opt) or die ($usage);
 if ($opt{h}) { die ($usage); } 
 if ($opt{u}) { 
                 $user[0]=$opt{u};
-                $i = 1;
          }
 if ($opt{d}) {
                 $user[0]='%@'.$opt{d};
-                $i = 1;
          }
 if ($opt{q}) {
 		if ($opt{q} !~ /^\d+$/) { die ("\n\nPlease, check quota threshold syntax, Remember to omit \%!\n\n") };
@@ -44,22 +42,23 @@ if (not defined ($user[0])) { die ($usage); }
 use Cyrus::IMAP::Admin;
 use POSIX;
 
-$totocc = 0;
-$totq = 0;
-$nmbox=0;
-$warnq = 0;
+my $totocc = 0;
+my $totq = 0;
+my $nmbox=0;
+my $warnq = 0;
 my $client;
 my $logproc = 'showmb';
 my $verbose = 0;
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
 require "/usr/local/cyr_scripts/core.pl";
 
 #
@@ -67,6 +66,7 @@ require "/usr/local/cyr_scripts/core.pl";
 #
 
 my %anno =();
+my %anno_var = ();
 
 my $auth = {
     -mechanism => 'login',
@@ -82,19 +82,37 @@ if ( ($client = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
 	exit(255);
 }
 
-printf "\n\n\e[33m".'%-30.30s  %-9s %-9s %-8s %-27s %-27s %-12s %-3s'."\e[39m\n", 'Mailbox','Used','Quota','Used(%)','LastIMAPupdate','Lastpop','Partition', 'Expire';
-for ($c=0;$c<$i;$c++) {
+printf "\n\n\e[33m" . '%-30.30s  %-9s %-9s %-8s %-27s %-27s %-12s %-3s' . "\e[39m\n",
+	'Mailbox',
+	'Used',
+	'Quota',
+	'Used(%)',
+	'LastIMAPupdate',
+	'Lastpop',
+	'Partition',
+	'Expire';
 
+my $cVer = cyrusVersion($client);
+
+for ($c=0;$c<$i;$c++) {
 		@mailboxes=$client->listmailbox('user'.$sep.$user[$c]);
-		$nmbox+=$#mailboxes+1;
 		for ($m=0;$m<=$#mailboxes;$m++) {
                         @info = $client->getinfo($mailboxes[$m][0]);
-                        for ($j=0;$j<$#info;$j+=2) {
-                        	$anno{$info[$j]} = $info[$j+1];
-                        }
+			for ($j=0;$j<$#info;$j+=2) {
+				$anno_var{$info[$j]} = $info[$j+1];
+			}
+			if ( $cVer =~ /^3/ ) {
+				%anno = %{$anno_var{$mailboxes[$m][0]}{'shared'}};
+				$anno_prefix = '/mailbox//vendor/cmu/cyrus-imapd';
+			}
+			if ( $cVer =~ /^(v|)2/ ) {
+				%anno = %anno_var;
+				$anno_prefix = '/mailbox/{'.$mailboxes[$m][0].'}/vendor/cmu/cyrus-imapd';
+			}
 			#use Data::Dump qw(dump);
 			#dump (\@info);
-			if ((defined $thispart) and ( $anno{$mailboxes[$m][0]}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/partition'} !~ /^$thispart/)) {next;}
+			if ((defined $thispart) and ( $anno{$anno_prefix.'/partition'} !~ /^$thispart$/)) {next;}
+			$nmbox++;
 			($root,%quota) = $client->quotaroot($mailboxes[$m][0]);
 			$root = $mailboxes[$m][0];
 			$root =~ s/user\///;
@@ -105,10 +123,12 @@ for ($c=0;$c<$i;$c++) {
 			else {$perc = ceil(100*$quota{'STORAGE'}[0]/$quota{'STORAGE'}[1]);}
 			if ((!(defined $thq)) or ($perc > $thq)) {
 				printf '%-30.30s  %-9u %-9s %-7u  ',$root,$quota{'STORAGE'}[0],$quota{'STORAGE'}[1],$perc;
-				$anno{$mailboxes[$m][0]}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/lastupdate'} =~ /^\s*\S+/ ? printf '%-27s ',$anno{$mailboxes[$m][0]}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/lastupdate'} : print '--------------------------  ';
-				$anno{$mailboxes[$m][0]}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/lastpop'} =~ /^\s*\S+/ ? printf '%-27s ',$anno{$mailboxes[$m][0]}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/lastpop'} : print '--------------------------  ';
-				printf "%-12s ",$anno{$mailboxes[$m][0]}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/partition'};
-				printf "%-3d\n",$anno{$mailboxes[$m][0]}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/expire'};
+				$anno{$anno_prefix.'/lastupdate'} =~ /^\s*\S+/ ?
+					printf '%-27s ',$anno{$anno_prefix.'/lastupdate'} : print '--------------------------  ';
+				$anno{$anno_prefix.'/lastpop'} =~ /^\s*\S+/ ?
+					printf '%-27s ',$anno{$anno_prefix.'/lastpop'} : print '--------------------------  ';
+				printf "%-12s ",$anno{$anno_prefix.'/partition'};
+				printf "%-3d\n",$anno{$anno_prefix.'/expire'};
 			}
 		}
 }
@@ -126,3 +146,4 @@ else {
 }
 
 if ($warnq) { print "\n\n".'Pay attention, some account(s) have no quota!'."\n\n";}
+exit (0);

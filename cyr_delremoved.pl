@@ -26,21 +26,22 @@ if ($#ARGV >= 0) {
         exit;
 }
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
 
-my $ldapconf = $cfg->get_block('ldap');
-my $ldapHost    = $ldapconf->{server};
-my $ldapPort    = $ldapconf->{port};
-my $ldapBase    = $ldapconf->{baseDN};  # Base dn containing whole domains
-my $ldapBindUid = $ldapconf->{user};
-my $ldapBindPwd = $ldapconf->{pass};
+my $ldapHost    = $cfg->val('ldap','server');
+my $ldapPort    = $cfg->val('ldap','port');
+my $ldapBase    = $cfg->val('ldap','baseDN');  # Base dn containing whole domains
+my $ldapBindUid = $cfg->val('ldap','user');
+my $ldapBindPwd = $cfg->val('ldap','pass');
+
 require "/usr/local/cyr_scripts/core.pl";
 
 my $verbose = 1;
@@ -56,6 +57,7 @@ my $verbose = 1;
 ######################################################
 
 my $logproc = 'delremoved';
+my $exit = 0;
 my $status=delRemovedUser ( $logproc, $ldapHost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_user,$cyrus_pass, $sep, $verbose );
 
 if ($status) {
@@ -63,5 +65,7 @@ if ($status) {
 }
 else {
 	print 'Process exited abnormally due to errors';
+	$exit = 1;
 }
 print "\n";
+exit($exit);

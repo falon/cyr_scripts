@@ -17,14 +17,16 @@ if ($#ARGV != 1) {
         exit;
 }
 
-use Config::Simple;
-my $cfg = new Config::Simple();
-$cfg->read('/usr/local/cyr_scripts/cyr_scripts.ini');
-my $imapconf = $cfg->get_block('imap');
-my $sep = $imapconf->{sep};
-my $cyrus_server = $imapconf->{server};
-my $cyrus_user = $imapconf->{user};
-my $cyrus_pass = $imapconf->{pass};
+use Config::IniFiles;
+my $cfg = new Config::IniFiles(
+        -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
+        -nomultiline => 1,
+        -handle_trailing_comment => 1);
+my $cyrus_server = $cfg->val('imap','server');
+my $cyrus_user = $cfg->val('imap','user');
+my $cyrus_pass = $cfg->val('imap','pass');
+my $sep = $cfg->val('imap','sep');
+my $exit = 0;
 
 require "/usr/local/cyr_scripts/core.pl";
 use Cyrus::IMAP::Admin;
@@ -93,6 +95,9 @@ use Switch;
 
 
 for ($c=0;$c<$i;$c++) {
-	setACL($logproc, $cyrus, $user[$c],'INBOX', $cyrus_user,'all',$sep,$verbose);
-        deleteMailbox($logproc, $cyrus, $user[$c], 'INBOX', $sep, $verbose);
+	setACL($logproc, $cyrus, $user[$c],'INBOX', $cyrus_user,'all',$sep,$verbose)
+		or $exit++;
+        deleteMailbox($logproc, $cyrus, $user[$c], 'INBOX', $sep, $verbose)
+		or $exit++;
 }
+exit($exit);
