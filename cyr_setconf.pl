@@ -40,6 +40,22 @@ my $status;
 my $error;
 my $pre_error = undef;
 my $sev;
+my $rdlog = '';
+if (defined $ENV{'RD_JOB_USERNAME'}) {
+	$rdlog = ' orig_user="'.$ENV{'RD_JOB_USERNAME'}.'"';
+}
+if (defined $ENV{'RD_JOB_EXECID'}) {
+	$rdlog .= ' rd_execid="'.$ENV{'RD_JOB_EXECID'}.'"';
+}
+if (defined $ENV{'RD_JOB_EXECUTIONTYPE'}) {
+	$rdlog .= ' rd_exectype="'.$ENV{'RD_JOB_EXECUTIONTYPE'}.'"';
+}
+if (defined $ENV{'RD_JOB_ID'}) {
+	$rdlog .= ' rd_id="'.$ENV{'RD_JOB_ID'}.'"';
+}
+if (defined $ENV{'RD_JOB_NAME'}) {
+	$rdlog .= ' rd_name="'.$ENV{'RD_JOB_NAME'}.'"';
+}
 
 given ( $section ) {
 	when ( 'imap' ) {
@@ -85,8 +101,12 @@ given ( $new_value ) {
 	}
 	default {
 		my $result = 0;
+		my $addinfo = '';
 		my $thistime = localtime();
-		$cfg->SetParameterTrailingComment($section, $par, ("Modified on $thistime by $0"));
+		if (defined $ENV{'RD_JOB_USERNAME'}) {
+			$addinfo= $ENV{'RD_JOB_USERNAME'} . ' using';
+		}
+		$cfg->SetParameterTrailingComment($section, $par, ("Modified on $thistime by $addinfo $0"));
 		$cfg->setval($section, $par, $new_value);
 		$result = $cfg->RewriteConfig;
 		if ($result == 1) {
@@ -103,5 +123,5 @@ given ( $new_value ) {
 		}
 	}
 }
-printLog($sev, "action=writeconf status=${status}${error} section=\"$section\" param=$par old_value=\"$old_value\" new_value=\"$new_value\"",$verbose);
+printLog($sev, "action=writeconf status=${status}${error}${rdlog} section=\"$section\" param=$par old_value=\"$old_value\" new_value=\"$new_value\"",$verbose);
 exit($exit);
