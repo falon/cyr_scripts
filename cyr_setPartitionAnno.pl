@@ -57,12 +57,12 @@ our $opt_d = 0;
 my $continue = 1;
 getopts('d');
 %argdaemon = (
-	work_dir     =>  $annoconf->{run_dir},
-	pid_file     =>  $annoconf->{pid_file}
+	work_dir     =>  $cfg->val('partition','run_dir'),
+	pid_file     =>  $cfg->val('partition','pid_file')
 );
 %procpidfile = (
-        dir     =>  $annoconf->{pid_dir},
-        name     =>  $annoconf->{pid_file}
+        dir     =>  $cfg->val('partition','pid_dir'),
+        name     => $cfg->val('partition','pid_file')
 );
 
 if ($debug) { use POSIX qw/strftime/; use Term::ANSIColor; }
