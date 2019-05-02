@@ -119,7 +119,12 @@ for ($c=0;$c<$i;$c++) {
 			$root =~ s/@.*$//;
                         $totocc+=$quota{'STORAGE'}[0];
                         $totq+=$quota{'STORAGE'}[1];
-			if (!(defined($quota{'STORAGE'}[1])) or ($quota{'STORAGE'}[1] eq '')) {$perc = 0;$warnq = 1;$quota{'STORAGE'}[1]='NO';}
+			if (!(defined($quota{'STORAGE'}[1])) or ($quota{'STORAGE'}[1] eq '')) {
+				$perc = 0;$warnq = 1;$quota{'STORAGE'}[1]='NO';
+			}
+			elsif ($quota{'STORAGE'}[1] == 0) {
+				$perc = 0;
+			}
 			else {$perc = ceil(100*$quota{'STORAGE'}[0]/$quota{'STORAGE'}[1]);}
 			if ((!(defined $thq)) or ($perc > $thq)) {
 				printf '%-30.30s  %-9u %-9s %-7u  ',$root,$quota{'STORAGE'}[0],$quota{'STORAGE'}[1],$perc;

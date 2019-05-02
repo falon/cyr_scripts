@@ -78,7 +78,7 @@ use Switch;
                 close(DAT);
                 foreach $line (@raw_data)
                 {
-                        chomp($line);
+                        wchomp($line);
                         $user[$i]=$line;
                         $i++;
                 }

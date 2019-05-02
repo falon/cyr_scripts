@@ -92,7 +92,7 @@ if (($#ARGV < 1) || ($#ARGV > 3)) {
 		close(DAT);
 		foreach $line (@raw_data)
 		{
-			chomp($line);
+			wchomp($line);
 			@PARAM=split(/\;/,$line,3);
 			if (($#PARAM <1) || ($#PARAM >2)) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
 			else { if ($#PARAM == 2) {

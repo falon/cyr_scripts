@@ -84,7 +84,7 @@ for ( $ARGV[0] ) {
 		close(DAT);
 		foreach $line (@raw_data)
 		{
-			chomp($line);
+			wchomp($line);
 			@PARAM=split(/\;/,$line,3);
 			if ($#PARAM != 2) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
 			else {

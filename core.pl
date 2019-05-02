@@ -31,6 +31,14 @@ sub checkascii {
  }
 }
 
+sub wchomp {
+# We redefine chomp to work with CRLF too.
+# It works by references.
+	foreach (@_) {
+		$_ =~ s/\r[\n]*//gm;
+	}
+}
+
 sub composembx {
 # rootmbx is the account name
 #	(alice@example.com)

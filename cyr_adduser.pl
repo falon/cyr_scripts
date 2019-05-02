@@ -101,7 +101,7 @@ my $cyrus;
                 close(DAT);
                 foreach $line (@raw_data)
                 {
-                        chomp($line);
+                        wchomp($line);
                         @PARAM=split(/\;/,$line,5);
                         if ($#PARAM != 4) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
                         else {
