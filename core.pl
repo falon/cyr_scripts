@@ -707,6 +707,7 @@ sub setQuota {
   use Encode;
   my ($mainproc, $cyrus, $user, $subfolder, $quota_size, $sep, $v) = @_;
   my $code = 'ISO-8859-1';
+  my @argv;
   my $imaputf7 = Unicode::IMAPUtf7->new();
   openlog("$mainproc/setQuota", "pid", LOG_MAIL);
 
@@ -715,6 +716,10 @@ sub setQuota {
   if ($quota_size ne 'none') {
 	  # quota provided in MB, but cyradm want KB:
 	  $quota_size = $quota_size * 1024;
+	  @argv=($mailbox, "STORAGE", $quota_size);
+  }
+  else {
+	  @argv=($mailbox);
   }
   my @before=$cyrus->listquotaroot($mailbox);
   if ($cyrus->error) {
@@ -729,7 +734,7 @@ sub setQuota {
 	$before[2][0] = 0;
   }
 
-  $cyrus->setquota($mailbox,"STORAGE",$quota_size);
+  $cyrus->setquota(@argv);
   if ($cyrus->error) {
 	$sev='LOG_ERR';
 	$error=$cyrus->error;
