@@ -3,10 +3,10 @@ perl:
         - "5.16"
 sudo: false
 before_install:
-        - echo "deb http://mirrors.kernel.org/ubuntu/ eoan main universe" | sudo tee -a /etc/apt/sources.list
-        - sudo apt-get update -qq
         - sudo apt-get install -y libswitch-perl
         - sudo apt-get install -y sasl2-bin
+        - echo "deb http://mirrors.kernel.org/ubuntu/ eoan main universe" | sudo tee -a /etc/apt/sources.list
+        - sudo apt-get update -qq
 addons:
           apt:
                 update: true
