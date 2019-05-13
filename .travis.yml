@@ -11,9 +11,9 @@ addons:
                 source:
                         - sourceline: 'deb http://mirrors.kernel.org/ubuntu/ eoan main universe'
                 packages:
-                        - cyrus-imapd
-                        - cyrus-clients
-                        - cyrus-admin
+                        - cyrus-imapd-3.0.8
+                        - cyrus-clients-3.0.8
+                        - cyrus-admin-3.0.8
 install:
         true
 before_script: true
