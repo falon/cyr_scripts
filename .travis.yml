@@ -2,3 +2,6 @@ language: perl
 perl:
         - "5.16"
 sudo: false
+
+after_failure:
+          - cat /home/travis/.cpanm/work/*/build.log
