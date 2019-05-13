@@ -6,7 +6,7 @@ sudo: false
 addons:
           apt:
                 update: true
-                source:
+                sources:
                         - sourceline: 'deb http://mirrors.kernel.org/ubuntu/ eoan main universe'
                 packages:
                         - sasl2-bin
