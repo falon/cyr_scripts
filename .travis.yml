@@ -1,9 +1,10 @@
 language: perl
 perl:
         - "5.16"
+sudo: false
 before_install:
-        - sudo apt-get install -y libswitch-perl
-        - sudo apt-get install -y cyrus-imapd cyrus-clients cyrus-admin sasl2-bin
+        - apt-get install -y libswitch-perl
+        - apt-get install -V -y cyrus-imapd cyrus-clients cyrus-admin sasl2-bin
 addons:
           apt:
                 update: true
@@ -11,6 +12,7 @@ addons:
                         - sourceline: 'deb http://it.archive.ubuntu.com/ubuntu/ eoan main universe'
 install:
         true
-
+before_script: true
+script: true
 after_failure:
           - cat /home/travis/.cpanm/work/*/build.log
