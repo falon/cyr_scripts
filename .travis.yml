@@ -3,8 +3,8 @@ perl:
         - "5.16"
 sudo: false
 before_install:
-        - apt-get install -y libswitch-perl
-        - apt-get install -V -y cyrus-imapd cyrus-clients cyrus-admin sasl2-bin
+        - sudo apt-get install -y libswitch-perl
+        - sudo apt-get install -V -y cyrus-imapd cyrus-clients cyrus-admin sasl2-bin
 addons:
           apt:
                 update: true
