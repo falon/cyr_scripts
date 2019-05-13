@@ -1,9 +1,17 @@
 language: perl
 perl:
         - "5.16"
-sudo: false
+before_install:
+        - sudo apt-get install -y libswitch-perl
+        - sudo apt-get install -y cyrus-imapd cyrus-imapd-utils
+        - http://it.archive.ubuntu.com/ubuntu/ eoan main universe restricted multiverse
+addons:
+          apt:
+                update: true
+                source:
+                - sourceline: 'deb http://it.archive.ubuntu.com/ubuntu/ eoan main universe'
 install:
-        - cpanm -v --installdeps --notest .
+        true
 
 after_failure:
           - cat /home/travis/.cpanm/work/*/build.log
