@@ -9,7 +9,7 @@ addons:
           apt:
                 update: true
                 source:
-                        - sourceline: 'deb http://it.archive.ubuntu.com/ubuntu/ eoan main universe'
+                        - sourceline: 'deb http://mirrors.kernel.org/ubuntu/ eoan main universe'
                 packages:
                         - cyrus-imapd
                         - cyrus-clients
