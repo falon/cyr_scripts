@@ -7,8 +7,7 @@
 #  -f <file>				   use a file in the form <user> <destServer> [<part>]
 #  -d <domain> <destServer> [part]	   Prepare a file xfer_<domain> for you! No change to systems.
 #
-# NOTE: this program MUST be run locally with open-xchange.
-# Prerequisite: admin uid and password for the two imap server are the same.
+# Prerequisite: admin uid and password for the two imap servers are the same.
 #
 
 use Config::IniFiles;
@@ -29,6 +28,7 @@ my $ldapBindPwd = $cfg->val('ldap','pass');
 my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 use URI;
+use Getopt::Long;
 
 # Config setting#
 
@@ -48,13 +48,13 @@ my $url = URI->new( $cfg->val('xfer','url') );
 
 ## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -u <user> <destServer> [part]\n";
+my $usage  = "\nUsage:\t$0 -user <user> -dest <destServer> [-part part]\n";
 $usage .= "\ttransfer <user> in <destServer>\n";
 $usage .= "\tinto new partition <part>. User will be removed from origin server.\n\n";
-$usage .= "\t $0 -f <file>\n";
+$usage .= "\t $0 -file <file>\n";
 $usage .= "\tread a file with lines in the form <user>;<destServer>[;<part>]\n\n";
-$usage .= "\t $0 -d <domain> <destServer> [part]\n";
-$usage .= "\tprepare a file named xfer_<domain> with lines in the form <user>;<destServer>;[<part>] for you. No change to systems.\n\n";
+$usage .= "\t $0 -d <domain> -dest <destServer> [-part part]\n";
+$usage .= "\tprepare a file named xfer_<domain> with lines in the form <user>;<destServer>;[<part>] for you. No changes applied.\n\n";
 
 my @old = undef;
 my @new = undef;
@@ -65,28 +65,39 @@ my $c = 0;
 my $mainproc = 'CyrXfer';
 
 
-if (($#ARGV < 1) || ($#ARGV > 3)) {
-	print $usage;
-	exit(1);
+if (! defined($ARGV[0]) ) {
+	die($usage);
 }
 
-
-     for ( $ARGV[0] ) {
-	 if    (/^-u/)  {
-		if ($#ARGV <2) { print $usage; die("\nI need at least <user> and <destServer>\n"); }
-		$user[0]=$ARGV[1];
-                if ($user[0] =~ /$sep/) {
-                        die("\nYou must specify a root mailbox in -u.\n$usage");
-                }
-		$destServer[0]=$ARGV[2];
-		if ($#ARGV == 3) {$part[0]=$ARGV[3];}
-		else {$part[0]='';}
+for ( $ARGV[0] ) {
+	 if    (/^-(-|)user/)  {
+		GetOptions(
+			'user=s'	=> \$user[0],
+			'dest=s'	=> \$destServer[0],
+			'part=s'	=> \$part[0]
+		) or die($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
+		defined($destServer[0])
+			or die("\nParameter -dest required.\n$usage");
+		if (defined($user[0])) {
+			if ($user[0] =~ /\Q$sep/) {
+				die("\nYou must specify a root mailbox in '-user'.\n$usage");
+			}
+		}
+		defined($part[0])
+			or $part[0]='';
 		$i=1;
 	 }
      
-	 elsif (/^-(-|)f/)  {
-		if ($#ARGV != 1) { print $usage; die ("\nI need the file name!\n"); }
-		$data_file=$ARGV[1];
+	 elsif (/^-(-|)file/)  {
+		GetOptions(
+			'file=s'   => \$data_file
+		) or die($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
+		defined($data_file)
+			or die("\nfile required.\n$usage");
 		open(DAT, $data_file) || die("Could not open $data_file!");
 		@raw_data=<DAT>;
 		close(DAT);
@@ -104,14 +115,22 @@ if (($#ARGV < 1) || ($#ARGV > 3)) {
 		print "\nFound $i accounts\n";  
 	 }
 
-	 elsif    (/^-d/)  {
-		if ($#ARGV <2) { print $usage; die("\nI need at least <domain> <destServer>\n"); }
-		$domain = $ARGV[1];
-		$destServer=$ARGV[2];
-		if ($#ARGV == 3) {$part=$ARGV[3];}
-		else {$part='';}
-		prepareXferDomain($mainproc,$ldaphost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$domain,$origServer,$destServer,$part,$v);
-		die ("The file xfer_$domain has created for your convenience. No changes made to systems.\n\n");
+	 elsif    (/^-(-|)d/)  {
+		my $partition = undef;
+		GetOptions(
+			'd=s'	=> \$domain,
+			'dest=s'=> \$destServer,
+			'part=s'=> \$partition
+		) or die($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
+		defined($destServer)
+			or die("\n-dest required.\n$usage");
+		defined($partition)
+			or $partition='';
+		prepareXferDomain($mainproc,$ldaphost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$domain,$origServer,$destServer,$partition,$v);
+		print "\n\nThe file xfer_$domain has created for your convenience. No changes made to systems.\n\n";
+		exit (0);
 	 }
      
 

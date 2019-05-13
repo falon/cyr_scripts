@@ -18,8 +18,9 @@
 ## Change nothing below, if you are a stupid user! ##
 
 my $usage  = "\nUsage:\t$0 -u <mailbox> -folder <folder> -uid <user> -right <right>\n";
-$usage .= "\t $0 -file <file>\n";
-$usage .= "\t read a file with lines in the form <mailbox>;<folder>;<user>;<right>.\n\n";
+$usage .= "\t $0 -file <file> [-utf7]\n";
+$usage .= "\t read a file with lines in the form <mailbox>;<folder>;<user>;<right>.\n";
+$usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n\n";
 
 use Config::IniFiles;
 my $cfg = new Config::IniFiles(
@@ -76,6 +77,7 @@ my $cyrus;
 
 my $code= $cfg->val('code','code');
 my $imaputf7 = Unicode::IMAPUtf7->new();
+my $utf7 = 0;
 
 if (! defined($ARGV[0]) ) {
         die($usage);
@@ -90,8 +92,8 @@ if (! defined($ARGV[0]) ) {
 		@ARGV == 0
 			or die("\nToo many arguments.\n$usage");
                 if (defined($fdr)) {
-	                if ($fdr =~ /\$sep/) {
-                        	die(\"nYou must specify a root mailbox in '-u'.\n$usage");
+	                if ($fdr =~ /\Q$sep/) {
+                        	die("\nYou must specify a root mailbox in '-u'.\n$usage");
 			}
 			$folder[0] = $imaputf7->encode(encode($code,$fdr));
                 }
@@ -102,8 +104,13 @@ if (! defined($ARGV[0]) ) {
 			or die("\nright required.\n$usage");
 		$i=1;
 	}
+	elsif (/^-(-|)h(|elp)$/) {
+		print $usage;
+		exit(0);
+	}
         elsif (/^-(-|)file/)  {
-                GetOptions(     'file=s'   => \$data_file
+                GetOptions(     'file=s'   => \$data_file,
+				'utf7'   => \$utf7
                 ) or die($usage);
                 @ARGV == 0
                         or die("\nToo many arguments.\n$usage");
@@ -120,7 +127,11 @@ if (! defined($ARGV[0]) ) {
                         else {
                                 ($mailbox[$i],$fdr,$who[$i],$right[$i])=@PARAM;
 				$right[$i]=~ s/\s+$//;  # Remove trailing spaces
-				$folder[$i] = $imaputf7->encode(encode($code,$fdr));
+				if ($utf7 == 0) {
+					$folder[$i] = $imaputf7->encode(encode($code,$fdr));
+				} else {
+					$folder[$i] = $fdr;
+				}
                         }
                         $i++;
                 }

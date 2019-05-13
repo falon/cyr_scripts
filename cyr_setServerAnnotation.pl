@@ -2,7 +2,7 @@
 #
 #
 # Usage:
-#  -a <path> <anno> <value type> <value>
+#  <path> <anno> <value type> <value>
 # 		set annotation <anno>
 #               for path <path> with <value> into <value type>
 
@@ -11,11 +11,14 @@
 
 ## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -a <path> <anno> <value type> <value>\n";
+my $usage  = "\nUsage:\t$0 <path> <anno> <value type> <value>\n";
 
-if ($#ARGV != 4) {
+if (! defined($ARGV[0]) ) {
+	die($usage);
+}
+if ($#ARGV != 3) {
         print $usage;
-        exit;
+        exit(255);
 }
 
 use Config::IniFiles;
@@ -59,15 +62,13 @@ my $IMAP;
 
 use Switch;
 
-     for ( $ARGV[0] ) {
-         if    (/^-a/)  {
-		$path = "$ARGV[1]";
-		$anno = "$ARGV[2]";
-		$valuetype = "$ARGV[3]";
-		$value = "$ARGV[4]";
-	}
-	else { die($usage); }
-   }
+if ($#ARGV != 3) {
+	die ($usage);
+}
+		$path = "$ARGV[0]";
+		$anno = "$ARGV[1]";
+		$valuetype = "$ARGV[2]";
+		$value = "$ARGV[3]";
 
 
 use Sys::Syslog;

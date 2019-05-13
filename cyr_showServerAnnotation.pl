@@ -2,18 +2,28 @@
 #
 #
 # Usage:
-#  -a <path> <anno> 
+#   <path> <anno> 
 
 
 # Config setting#
+# Options:
+# <path> is the annotation path
+# <anno> is the annotation name
+# <field> is the type of <anno> to return. Some instances:
+# 	"*" (all)
+# 	"value.*" (all values, as ("value.priv" "value.shared")
+# 	"value.priv" (only value.priv)
 
 ## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -a <path> <anno> \n";
+my $usage  = "\nUsage:\t$0 <path> <anno> <field>\n";
 
+if (! defined($ARGV[0]) ) {
+	die($usage);
+}
 if ($#ARGV != 2) {
         print $usage;
-        exit;
+        exit(255);
 }
 
 use Mail::IMAPTalk;
@@ -45,6 +55,7 @@ require "/usr/local/cyr_scripts/core.pl";
 
 my $path = undef;
 my $anno = undef;
+my $type = undef;
 my $IMAP;
 my $verbose = 1;
 my $logproc='showServerAnno';
@@ -52,13 +63,9 @@ my $logfac = 'LOG_MAIL';
 my $error;
 my $read;
 
-     for ( $ARGV[0] ) {
-         if    (/^-a/)  {
-		$path = "$ARGV[1]";
-		$anno = "$ARGV[2]";
-	}
-	else { die($usage); }
-   }
+		$path = "$ARGV[0]";
+		$anno = "$ARGV[1]";
+		$type = "$ARGV[2]";
 
 
 openlog("$logproc/imapconnect",'pid',$logfac);
@@ -73,7 +80,7 @@ if (!$IMAP) {
     $exit = 255;
 }
 
-$read=$IMAP->getannotation($path,$anno,"*");
+$read=$IMAP->getannotation($path,$anno,$type);
 $error=$@;
 if (!$read) {
 	printLog('LOG_ERR',"action=imapread status=fail error=\"$error\" server=$cyrus_server mailHost=$cyrus_server",$verbose);
@@ -84,7 +91,8 @@ if (!$read) {
 
 use Data::Dumper;
 $Data::Dumper::Terse = 1;
-print Dumper $read;
+#print Dumper($read->{''}->{'/vendor/domain'});
+print Dumper($read);
 $IMAP->close();
 closelog();
 exit($exit);

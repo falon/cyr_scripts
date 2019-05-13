@@ -17,7 +17,7 @@ require "/usr/local/cyr_scripts/core.pl";
 
 ## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -mboxold <user_now> -folderold <foldernow> -mboxnew <user_new> -foldernew <foldernew> [-p part] [-autopart] [-oldpart]\n";
+my $usage  = "\nUsage:\t$0 -mboxold <user_now> -folderold <foldernow> -mboxnew <user_new> -foldernew <foldernew> [-part <part>] [-autopart] [-oldpart]\n";
 $usage .= "\tmove <foldernow> of <user_now> in <foldernew> of <user_new>\n";
 $usage .= "\tinto new partition <part>\n";
 $usage .="\t* or into partition of <mboxnew> domain defined by Partition Manager if -autopart\n";
@@ -77,22 +77,22 @@ for ( $ARGV[0] ) {
 				'folderold:s'	=> \$fdrold,
 				'mboxnew=s'	=> \$mboxnew[0],
 				'foldernew:s'	=> \$fdrnew,
-				'part:s'	=> \$part[0],
+				'part=s'	=> \$part[0],
 				'autopart'	=> \$autopart,
 				'oldpart'	=> \$oldpart	
 		) or die($usage);
 		@ARGV == 0
 			or die("\nToo many arguments.\n$usage");
                 if (defined($fdrold)) {
-			if ($fdrold =~ /\$sep/) {
-				die(\"nYou must specify a root mailbox in '-u'.\n$usage");
+			if ($fdrold =~ /^\Q$sep/) {
+				die("\nYou must specify a folder path without the initial $sep in '-folderold'.\n$usage");
 			}
 			$folderold[0] = $imaputf7->encode(encode($code,$fdrold));
 		}
 		else { $folderold[0] = 'INBOX'; }
 		if (defined($fdrnew)) {
-			if ($fdrnew =~ /\$sep/) {
-				die(\"nYou must specify a root mailbox in '-u'.\n$usage");
+			if ($fdrnew =~ /^$sep/) {
+				die("\nYou must specify a folder path without the initial $sep in '-foldernew'.\n$usage");
 			}
 			$foldernew[0] = $imaputf7->encode(encode($code,$fdrnew));
 		}
@@ -103,6 +103,10 @@ for ( $ARGV[0] ) {
 			or $part[0]='';
 		$i=1;
 	}
+        elsif (/^-(-|)h(|elp)$/) {
+		print $usage;
+		exit(0);
+}
 	elsif (/^-(-|)file/)  {
 		GetOptions(     'file=s'   => \$data_file,
 				'utf7'   => \$utf7

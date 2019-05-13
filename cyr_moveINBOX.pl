@@ -71,6 +71,10 @@ for ( $ARGV[0] ) {
 			or $part[0]='';
 		$i=1;
 	}
+	elsif (/^-(-|)h(|elp)$/) {
+		print $usage;
+		exit(0);
+	}
 	elsif (/^-(-|)file/)  {
 		GetOptions(     'file=s'   => \$data_file,
 				'utf7'   => \$utf7

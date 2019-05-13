@@ -3,7 +3,7 @@
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
 #########  Build release  #########
-our $build = '0.1.6 - 23 Apr 2019';
+our $build = '0.1.7 - 13 May 2019';
 ###################################
 
 
@@ -705,6 +705,7 @@ sub setQuota {
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
   use Encode;
+  use feature "switch";
   my ($mainproc, $cyrus, $user, $subfolder, $quota_size, $sep, $v) = @_;
   my $code = 'ISO-8859-1';
   my @argv;
@@ -713,13 +714,24 @@ sub setQuota {
 
   $mailbox=composembx($user,$subfolder,$sep,'user');
   $folder = decodefoldername($subfolder, $imaputf7, $code);
-  if ($quota_size ne 'none') {
-	  # quota provided in MB, but cyradm want KB:
-	  $quota_size = $quota_size * 1024;
-	  @argv=($mailbox, "STORAGE", $quota_size);
+  defined $quota_size
+	  or $quota_size = 'none';
+  if ( $quota_size =~ /^[\s\r\n\t]*$/ ) {
+	  $quota_size = 'none';
   }
-  else {
-	  @argv=($mailbox);
+  given ( $quota_size ) {
+	when( 'none' ) {
+		  @argv=($mailbox);
+	}
+	when( /^\d+$/ ) {
+	  	# quota provided in MB, but cyradm want KB:
+	  	$quota_size = $quota_size * 1024;
+	  	@argv=($mailbox, "STORAGE", $quota_size);
+	}
+	default {
+		printLog('LOG_ERR', "action=setimapquota status=fail error=\"You must provide a quota in MiB, or none\" mailbox=\"$user\" folder=\"$folder\" detail=\"Error reading the new quota value\"", $v);
+		return 0;
+	}
   }
   my @before=$cyrus->listquotaroot($mailbox);
   if ($cyrus->error) {
@@ -729,9 +741,11 @@ sub setQuota {
         $return=0;
 	printLog($sev, "action=setimapquota status=$status error=\"$error\" mailbox=\"$user\" folder=\"$folder\" detail=\"Error reading the old quota value\"", $v);
   }
-  if (!$before[2][1]) {
-	$before[2][1] = 0;
-	$before[2][0] = 0;
+  if (! defined $before[2][1]) {
+	$before[2][1] = 'none';
+  }
+  if (! defined $before[2][0]) {
+	 $before[2][0] = 0;
   }
 
   $cyrus->setquota(@argv);
@@ -935,7 +949,7 @@ sub prepareXferDomain {
                 return 0;
         }
         $nret = $mesg->count;
-	print "$nret mailboxes found!\n";
+	print "\n$nret mailboxes found!\n\n";
         printLog('LOG_INFO', "action=ldapsearch status=success domain=$domain origMailHost=$origServer mailHost=$destServer part=$part nMailbox=$nret",$v);
 	open (FILE, ">xfer_$domain");
         for ( $i = 0 ; $i < $nret ; $i++ ) {

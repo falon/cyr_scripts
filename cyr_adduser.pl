@@ -22,17 +22,17 @@
 
 ## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -u <user> <partition> <quota> <spamexp> <trashexp>\n";
-$usage .= "\t $0 -f <file>\n";
+my $usage  = "\nUsage:\t$0 -u <user> -p <partition> -q <quota> -spamexp <spamexp> -trashexp <trashexp>\n";
+$usage .= "\t $0 -file <file>\n";
 $usage .= "\t read a file with lines in the form <user>;<partition>;<quota>;<spamexp>;<trashexp>.\n";
 $usage .= "Please, add the LDAP entry before.\n\n";
 
-if (($#ARGV < 1) || ($#ARGV > 5)) {
-        print $usage;
-        exit;
+if (! defined($ARGV[0]) ) {
+	die($usage);
 }
 
 use Config::IniFiles;
+use Getopt::Long;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
@@ -79,28 +79,35 @@ my $logproc='adduser';
 my $exit = 0;
 my $cyrus;
 
+for ( $ARGV[0] ) {
+	if (/^-(-|)u/)  {
+		GetOptions(     'u=s'	=> \$newuser[0],
+				'p=s'	=> \$partition[0],
+				'q=s'	=> \$quota_size[0],
+				'spamexp=s'	=> \$expSpam[0],
+				'trashexp=s'	=> \$expTrash[0]
+		) or die ($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
 
-     for ( $ARGV[0] ) {
-         if    (/^-u/)  {
-                if ($#ARGV <4) { print $usage; die("\nI need  <user> <part> <quota> <expSpam> <expTrash>\n"); }
-		$newuser[0] = "$ARGV[1]";
-                if ($newuser[0] =~ /\$sep/) {
-                        die(\"nYou must specify a root mailbox in '-u'.\n$usage");
-                }
-		$partition[0] = "$ARGV[2]";
-		$quota_size[0] = "$ARGV[3]";
-		$expSpam[0] = "$ARGV[4]";
-		$expTrash[0] = "$ARGV[5]";
+		if ($newuser[0] =~ /\Q$sep/) {
+			die("\nYou must specify a root mailbox in '-u'.\n$usage");
+		}
 		$i=1;
 	}
-        elsif (/^-f/)  {
-                if ($#ARGV != 1) { print $usage; die ("\nI need the file name!\n"); }
-                $data_file=$ARGV[1];
-                open(DAT, $data_file) || die("Could not open $data_file!");
-                @raw_data=<DAT>;
-                close(DAT);
-                foreach $line (@raw_data)
-                {
+	elsif (/^-(-|)file/)  {
+		GetOptions(     'file=s'   => \$data_file,
+		) or die($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
+		defined($data_file)
+			or die("\nfile required.\n$usage");
+
+	        open(DAT, $data_file) || die("Could not open $data_file!");
+        	@raw_data=<DAT>;
+        	close(DAT);
+        	foreach $line (@raw_data)
+        	{
                         wchomp($line);
                         @PARAM=split(/\;/,$line,5);
                         if ($#PARAM != 4) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
@@ -109,11 +116,15 @@ my $cyrus;
 				$expTrash[$i]=~ s/\s+$//;  # Remove trailing spaces
                         }
                         $i++;
-                }
-                print "\nFound $i accounts\n";
-         }
+         	}
+         	print "\nFound $i accounts\n";
+	}
+	elsif (/^-(-|)h(elp|)$/) {
+		print $usage;
+		exit 0;
+	}
 	else { die($usage); }
-   }
+}
 
 
 if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {

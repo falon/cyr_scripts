@@ -11,13 +11,13 @@
 
 ## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -u <user> <folder> <anno> <value>\n";
-$usage .= "\t $0 -f <file>\n";
-$usage .= "\t read a file with lines in the form <user>;<folder>;<anno>;<value>\n\n";
+my $usage  = "\nUsage:\t$0 -user <user> -folder <folder> -anno <anno> -value <value>\n";
+$usage .= "\t $0 -file <file> [-utf7]\n";
+$usage .= "\t read a file with lines in the form <user>;<folder>;<anno>;<value>\n";
+$usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n\n";
 
-if (($#ARGV < 1) || ($#ARGV > 4)) {
-        print $usage;
-        exit(1);
+if (! defined($ARGV[0]) ) {
+	die($usage);
 }
 
 use Config::IniFiles;
@@ -29,6 +29,7 @@ my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
+my $code=$cfg->val('code','code');
 
 require "/usr/local/cyr_scripts/core.pl";
 use Cyrus::IMAP::Admin;
@@ -61,26 +62,51 @@ my $auth = {
 #####			MAIN			######
 ######################################################
 
+use Getopt::Long;
+use Unicode::IMAPUtf7;
+use Encode;
+my $imaputf7 = Unicode::IMAPUtf7->new();
+my $utf7 = 0;
 my $i = 0;
 my $c = 0;
 my @newuser = undef;
+my $fdr = undef;
 my @partition = undef;
 my @quota_size = undef;
+my $data_file = undef;
 my $cyrus;
 my $exit = 0;
 
      for ( $ARGV[0] ) {
          if    (/^-u/)  {
-                if ($#ARGV <4) { print $usage; die("\nI need  <user> <folder> <anno> <value>\n"); }
-		$newuser[0] = "$ARGV[1]";
-		$folder[0] = "$ARGV[2]";
-		$anno[0] = "$ARGV[3]";
-		$value[0] = "$ARGV[4]";
+		GetOptions(     'user=s'	=> \$newuser[0],
+				'folder:s'	=> \$fdr,
+				'anno=s'	=> \$anno[0],
+				'value=s'	=> \$value[0]
+		) or die($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
+		if (defined($fdr)) {
+			if ($fdr =~ /^\Q$sep/) {
+				die("\nYou must specify a folder path without the initial $sep in '-folderold'.\n$usage");
+			}
+			$folder[0] = $imaputf7->encode(encode($code,$fdr));
+		}
+		else { $folder[0] = 'INBOX'; }
 		$i=1;
 	}
-        elsif (/^-f/)  {
-                if ($#ARGV != 1) { print $usage; die ("\nI need the file name!\n"); }
-                $data_file=$ARGV[1];
+	elsif (/^-(-|)h(|elp)$/) {
+		print $usage;
+		exit(0);
+	}
+        elsif (/^-(-|)file/)  {
+		GetOptions(     'file=s'   => \$data_file,
+				'utf7'   => \$utf7
+		) or die($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
+		defined($data_file)
+			or die("\nfile required.\n$usage");
                 open(DAT, $data_file) || die("Could not open $data_file!");
                 @raw_data=<DAT>;
                 close(DAT);
@@ -90,8 +116,13 @@ my $exit = 0;
                         @PARAM=split(/\;/,$line,4);
                         if ($#PARAM != 3) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
                         else {
-                                ($newuser[$i],$folder[$i],$anno[$i],$value[$i])=@PARAM;
+                                ($newuser[$i],$fdr,$anno[$i],$value[$i])=@PARAM;
                         }
+			if ($utf7 == 0) {
+				$folder[$i] = $imaputf7->encode(encode($code,$fdr));
+			} else {
+				$folder[$i] = $fdr;
+			}
                         $i++;
                 }
                 print "\nFound $i accounts\n";

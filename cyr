@@ -7,7 +7,7 @@ usage() {
 
 SERVER=$1
 [ "$#" -eq 1 ] || {
-	SERVER=`sed -nr "/^\[imap\]/ { :l /^server\s*[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" $HOMEDIR/cyr_scripts.ini`
+	SERVER=`sed -nr "/^\[imap\]/ { :l /^server\s*[ ]*=/ { s/.*=[ ]*//; s/\s*#.*//; p; q;}; n; b l;}" $HOMEDIR/cyr_scripts.ini`
 	echo -en "\n1 argument required, with server name where to connect, $# provided.\nAssuming \e[33m$SERVER\e[39m as server, as provided in config file.\n\n";
 }
 
@@ -15,6 +15,6 @@ if [ "$1" == '--help' ] || [ "$1" == '-h' ] || [ "$1" == 'help' ]; then
 	usage;
 	exit 1;
 fi
-USER=`sed -nr "/^\[imap\]/ { :l /^user\s*[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" $HOMEDIR/cyr_scripts.ini`
+USER=`sed -nr "/^\[imap\]/ { :l /^user\s*[ ]*=/ { s/.*=[ ]*//; s/\s*#.*//; p; q;}; n; b l;}" $HOMEDIR/cyr_scripts.ini`
 echo -en "\nConnecting to server <\e[33m$SERVER\e[39m> with user <\e[33m$USER\e[39m>...\n"
 /usr/bin/cyradm -u $USER $SERVER

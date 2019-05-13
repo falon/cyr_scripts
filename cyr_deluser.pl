@@ -12,9 +12,11 @@ my $usage  = "\nUsage:\t$0 -u <user>\n";
 $usage .= "\t $0 -f <file>\n";
 $usage .= "\t read a file with lines in the form <user> \n\n";
 
-if ($#ARGV != 1) {
+@ARGV or die($usage);
+
+if (($#ARGV != 1) && ($ARGV[0] ne '-h')) {
         print $usage;
-        exit;
+        exit(255);
 }
 
 use Config::IniFiles;
@@ -65,12 +67,16 @@ my $cyrus;
 use Switch;
 
      for ( $ARGV[0] ) {
-         if    (/^-u/)  {
+	if (/^-h/)  {
+		print $usage;
+		exit(0);
+	}
+        elsif    (/^-u/)  {
                 if ($#ARGV != 1) { print $usage; die("\nI need  <user>\n"); }
 		$user[0] = "$ARGV[1]";
 		$i=1;
 	}
-        elsif (/^-f/)  {
+        elsif (/^-f(|ile)$/)  {
                 if ($#ARGV != 1) { print $usage; die ("\nI need the file name!\n"); }
                 $data_file=$ARGV[1];
                 open(DAT, $data_file) || die("Could not open $data_file!");
