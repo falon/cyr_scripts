@@ -3,12 +3,6 @@ dist: xenial
 perl:
         - "5.16"
 sudo: false
-before_install:
-        - echo "deb http://mirrors.kernel.org/ubuntu/ eoan main universe" | sudo tee -a /etc/apt/sources.list
-        - sudo apt-get update -qq
-        - sudo apt-get install cyrus-imapd -y
-        - sudo apt-get install cyrus-clients -y
-        - sudo apt-get install cyrus-admin -y
 addons:
           apt:
                 update: true
@@ -17,9 +11,12 @@ addons:
                 packages:
                         - sasl2-bin
                         - libswitch-perl
+                        - cyrus-imapd
+                        - cyrus-clients
+                        - cyrus-admin
 install:
         true
 before_script: true
 script: true
-after_failure:
-          - cat /home/travis/.cpanm/work/*/build.log
+after_failure: true
+#          - cat /home/travis/.cpanm/work/*/build.log
