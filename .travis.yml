@@ -2,6 +2,8 @@ language: perl
 perl:
         - "5.16"
 sudo: false
+install:
+        - cpanm -v --installdeps --notest .
 
 after_failure:
           - cat /home/travis/.cpanm/work/*/build.log
