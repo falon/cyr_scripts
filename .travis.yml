@@ -3,13 +3,12 @@ perl:
         - "5.16"
 before_install:
         - sudo apt-get install -y libswitch-perl
-        - sudo apt-get install -y cyrus-imapd cyrus-imapd-utils
-        - http://it.archive.ubuntu.com/ubuntu/ eoan main universe restricted multiverse
+        - sudo apt-get install -y cyrus-imapd cyrus-clients cyrus-admin sasl2-bin
 addons:
           apt:
                 update: true
                 source:
-                - sourceline: 'deb http://it.archive.ubuntu.com/ubuntu/ eoan main universe'
+                        - sourceline: 'deb http://it.archive.ubuntu.com/ubuntu/ eoan main universe'
 install:
         true
 
