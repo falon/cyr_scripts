@@ -4,12 +4,16 @@ perl:
 sudo: false
 before_install:
         - sudo apt-get install -y libswitch-perl
-        - sudo apt-get install -V -y cyrus-imapd cyrus-clients cyrus-admin sasl2-bin
+        - sudo apt-get install -y sasl2-bin
 addons:
           apt:
                 update: true
                 source:
                         - sourceline: 'deb http://it.archive.ubuntu.com/ubuntu/ eoan main universe'
+                packages:
+                        - cyrus-imapd
+                        - cyrus-clients
+                        - cyrus-admin
 install:
         true
 before_script: true
