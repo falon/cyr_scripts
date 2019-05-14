@@ -15,6 +15,7 @@ addons:
                         - cyrus-clients
                         - cyrus-admin
                         - 389-ds
+                        - libmozilla-ldap-perl
 install:
         true
 before_script:
