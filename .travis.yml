@@ -18,7 +18,7 @@ addons:
 install:
         true
 before_script:
-        - setup-ds.pl -f travis/ldap.inf
+        - setup-ds -f travis/ldap.inf
         - sistemctl restart dirsrv     
 script: true
 after_failure: true
