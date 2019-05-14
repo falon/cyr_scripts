@@ -19,7 +19,7 @@ addons:
 install:
         true
 before_script:
-        #- export PERL5LIB=/usr/lib/x86_64-linux-gnu/perl5/5.28
+        - export PERL5LIB=/usr/lib/x86_64-linux-gnu/perl5/5.28
         - setup-ds -f travis/ldap.inf
         - sistemctl restart dirsrv     
 script: true
