@@ -2,7 +2,7 @@ language: perl
 dist: xenial
 perl:
         - "5.28"
-sudo: true
+sudo: false
 addons:
           apt:
                 update: true
@@ -20,8 +20,8 @@ install:
         true
 before_script:
         - export PERL5LIB=/usr/lib/x86_64-linux-gnu/perl5/5.28
-        - sudo setup-ds -f travis/ldap.inf
-        - sistemctl restart dirsrv     
+        - sudo setup-ds --silent --file=travis/ldap.inf
+        - sudo systemctl restart dirsrv     
 script: true
 after_failure: true
 #          - cat /home/travis/.cpanm/work/*/build.log
