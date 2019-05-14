@@ -1,3 +1,7 @@
+[General]
+SuiteSpotUserID= dirsrv
+SuiteSpotGroup= dirsrv
+
 [slapd]
 SlapdConfigForMC= Yes
 UseExistingMC= 0
