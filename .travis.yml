@@ -15,6 +15,7 @@ addons:
                         - cyrus-clients
                         - cyrus-admin
                         - 389-ds
+                        - 389-admin
 install:
         true
 before_script:
