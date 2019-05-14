@@ -1,8 +1,8 @@
 language: perl
 dist: xenial
 perl:
-        - "5.28.0"
-sudo: false
+        - "5.28"
+sudo: true
 addons:
           apt:
                 update: true
