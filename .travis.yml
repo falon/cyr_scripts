@@ -15,12 +15,11 @@ addons:
                         - cyrus-clients
                         - cyrus-admin
                         - 389-ds
-                        - 389-admin
 install:
         true
 before_script:
-        - setup-ds-admin.pl -f travis/ldap.inf
-        - service dirsrv restart        
+        - setup-ds.pl -f travis/ldap.inf
+        - sistemctl restart dirsrv     
 script: true
 after_failure: true
 #          - cat /home/travis/.cpanm/work/*/build.log
