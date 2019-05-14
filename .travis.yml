@@ -1,7 +1,7 @@
 language: perl
 dist: xenial
 perl:
-        - "5.26"
+        - "5.28.0"
 sudo: false
 addons:
           apt:
