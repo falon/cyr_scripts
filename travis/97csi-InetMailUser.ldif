@@ -1,0 +1,79 @@
+dn: cn=schema
+#Attributes
+#
+attributeTypes: ( mailPostfixTransport-oid
+  NAME ( 'mailPostfixTransport' )
+  DESC 'Postfix user defined attribute for mail transport mechs'
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE
+  X-ORIGIN 'Postfix' )
+attributeTypes: ( 2.16.840.1.113730.3.1.778
+  NAME ( 'mailUserStatus' )
+  DESC 'Sun ONE Messaging Server defined attribute'
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE
+  X-ORIGIN 'Sun ONE Messaging Server' )
+attributeTypes: ( senderBCCEnable-oid
+  NAME ( 'senderBCCEnable' )
+  DESC 'Postfix user defined attribute for enable Always Sender BCC mechs'
+  EQUALITY booleanMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
+  SINGLE-VALUE
+  X-ORIGIN 'Postfix' )
+attributeTypes: ( recipientBCCEnable-oid
+  NAME ( 'recipientBCCEnable' )
+  DESC 'Postfix user defined attribute for enable Always Recipient BCC mechs'
+  EQUALITY booleanMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
+  SINGLE-VALUE
+  X-ORIGIN 'Postfix' )
+attributeTypes: ( mailPostfixSenderBCCAddress-oid
+  NAME ( 'mailPostfixSenderBCCAddress' )
+  DESC 'Postfix user defined attribute for email Always Sender BCC mechs'
+  EQUALITY caseIgnoreIA5Match
+  SUBSTR caseIgnoreIA5SubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{256}
+  SINGLE-VALUE
+  X-ORIGIN 'Postfix' )
+attributeTypes: ( mailPostfixRecipientBCCAddress-oid
+  NAME ( 'mailPostfixRecipientBCCAddress' )
+  DESC 'Postfix user defined attribute for email Always Recipient BCC mechs'
+  EQUALITY caseIgnoreIA5Match
+  SUBSTR caseIgnoreIA5SubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{256}
+  SINGLE-VALUE
+  X-ORIGIN 'Postfix' )
+attributeTypes: ( mailPostfixMassMail-oid
+  NAME ( 'mailPostfixMassMail' )
+  DESC 'Postfix user defined attribute for MASS MAIL operators'
+  EQUALITY booleanMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
+  SINGLE-VALUE
+  X-ORIGIN 'Postfix' )
+attributeTypes: ( spamassassin-oid
+  NAME ( 'spamassassin' )
+  DESC 'SpamAssassin user preferences settings'
+  EQUALITY caseExactMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  X-ORIGIN 'Spamassassin' )
+#
+#
+#Objectclasses
+objectclasses: (
+  2.16.840.1.113730.3.2.146
+  NAME 'inetMailUser'
+  DESC 'user defined class for a cyrus messaging server user'
+  SUP top
+  AUXILIARY
+  MUST ( )
+  MAY ( mailPostfixTransport $ mailUserStatus $ senderBCCEnable $ recipientBCCEnable $ mailPostfixSenderBCCAddress $ mailPostfixRecipientBCCAddress $ mailPostfixMassMail $ spamassassin )
+  X-ORIGIN 'user defined' )
+objectclasses: ( inetAmavisMailRecipient-oid
+  NAME 'inetAmavisMailRecipient'
+  DESC 'auxiliary class for mail Amavis attributes'
+  SUP top
+  AUXILIARY
+  MUST ( )
+  MAY ( mail )
+  X-ORIGIN ( 'RBL Manager' 'user defined' ) )
+#

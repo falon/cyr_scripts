@@ -1,0 +1,24 @@
+[General]
+SuiteSpotUserID= dirsrv
+SuiteSpotGroup= dirsrv
+AdminDomain= example.com
+ConfigDirectoryAdminID= admin
+ConfigDirectoryAdminPwd= password
+
+[slapd]
+SlapdConfigForMC= Yes
+UseExistingMC= 0
+ServerIdentifier= example
+Suffix= c=it
+RootDN= cn=Directory Manager
+UseReplication= No
+AddSampleEntries= No
+InstallLdifFile= none
+AddOrgEntries= Yes
+DisableSchemaChecking= No
+RootDNPwd= ldapassword
+SchemaFile= travis/97csi-InetMailUser.ldif
+
+[admin]
+ServerAdminID= admin
+ServerAdminPwd= password

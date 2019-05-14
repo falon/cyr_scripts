@@ -1,7 +1,7 @@
 language: perl
 dist: xenial
 perl:
-        - "5.16"
+        - "5.28"
 sudo: false
 addons:
           apt:
@@ -14,9 +14,12 @@ addons:
                         - cyrus-imapd
                         - cyrus-clients
                         - cyrus-admin
+                        - 389-ds
 install:
         true
-before_script: true
+before_script:
+        - setup-ds-admin.pl -f travis/ldap.inf
+        - service dirsrv restart        
 script: true
 after_failure: true
 #          - cat /home/travis/.cpanm/work/*/build.log
