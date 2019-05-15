@@ -1,0 +1,40 @@
+dn: uid=cyrusadmin,c=it
+mailUserStatus: active
+sn: Administrator
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: inetMailUser
+objectClass: mailRecipient
+givenName: Cyrus
+cn: Cyrus Big Administrator
+description: Only for imap administration, no mail
+uid: cyrusadmin
+userPassword: cyrusadmin
+
+dn: o=example.com,c=it
+associatedDomain: example.com
+objectClass: top
+objectClass: organization
+objectClass: domainRelatedObject
+o: example.com
+
+dn: uid=marco.favero@example.com,o=example.com,cn=en
+mailHost: localhost
+mailDeliveryOption: mailbox
+mailUserStatus: active
+mail: marco.favero@example.com
+uid: marco.favero@example.com
+userPassword: password
+cn: Marco Favero
+sn: Favero
+givenName: Marco
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: inetMailUser
+objectClass: mailRecipient
+mailAlternateAddress: marco@example.com
+mailPostfixTransport: lmtp:[localhost]
