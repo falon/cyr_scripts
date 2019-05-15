@@ -19,7 +19,8 @@ addons:
 install:
         true
 before_script:
-        - sudo hostname localhost
+        - sudo hostname cyrus.example.com
+        - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
         #        - export PERL5LIB=/usr/lib/x86_64-linux-gnu/perl5/5.28
         - sudo setup-ds --silent --file=travis/ldap.inf
         - sudo systemctl restart dirsrv     
