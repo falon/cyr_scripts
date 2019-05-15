@@ -46,10 +46,12 @@ before_install:
         - sudo mkdir -pv /maildata/example.com/maildata2
         - sudo systemctl restart cyrus-imapd
 install:
-        - cpanm --installdeps --notest .
+        true
 before_script:
         - sudo testsaslauthd -u marco.favero@example.com -p password
 script:
+        - cpanm --installdeps --notest .
+        - cat /home/travis/.cpanm/work/*/build.log
         - ./cyr_version.pl
 after_failure: true
 #          - cat /home/travis/.cpanm/work/*/build.log
