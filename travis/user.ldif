@@ -1,3 +1,8 @@
+dn: c=it
+c: it
+objectClass: top
+objectClass: country
+
 dn: uid=cyrusadmin,c=it
 mailUserStatus: active
 sn: Administrator
@@ -20,7 +25,7 @@ objectClass: organization
 objectClass: domainRelatedObject
 o: example.com
 
-dn: uid=marco.favero@example.com,o=example.com,cn=en
+dn: uid=marco.favero@example.com,o=example.com,c=it
 mailHost: localhost
 mailDeliveryOption: mailbox
 mailUserStatus: active
