@@ -8,7 +8,7 @@ ServerPort= 389
 SlapdConfigForMC= Yes
 UseExistingMC= 0
 ServerIdentifier= example
-Suffix= cn=en
+Suffix= c=it
 RootDN= cn=Directory Manager
 UseReplication= No
 AddSampleEntries= No
