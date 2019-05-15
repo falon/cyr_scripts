@@ -19,21 +19,19 @@ addons:
 install:
         true
 before_script:
-        - sudo hostname cyrus.example.com
         - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
         - sudo setup-ds --silent --file=travis/ldap.inf
         - ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/user.ldif
         - cat /etc/imapd.conf
         - cat /etc/default/saslauthd
-        - cat /lib/systemd/system/cyrus-imapd.service
+        - cat /etc/default/cyrus-imapd
         - sudo sed -i 's|MECHANISMS=.*|MECHANISMS="ldap"|' /etc/default/saslauthd
         - sudo cp travis/saslauthd.conf /etc/
         - sudo systemctl start saslauthd
         - sudo cp travis/annoIMAP.conf /etc/
         - sudo cp travis/imapd.conf /etc/
-        - mkdir -pv /maildata/example.com/maildata1
-        - mkdir -pv /maildata/example.com/maildata2
-        - 
+        - sudo mkdir -pv /maildata/example.com/maildata1
+        - sudo mkdir -pv /maildata/example.com/maildata2
         - sudo systemctl restart cyrus-imapd
 script:
         - ./cyr_version.pl
