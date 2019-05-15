@@ -9,8 +9,8 @@ pass	= cyrusadmin
 [ldap]
 server	= ldap.example.com
 port	= 389
-baseDN	= cn=en
-user	= uid=admin,cn=en
+baseDN	= c=it
+user	= uid=admin,c=it
 pass	= ldapassword
 
 [logintest]
