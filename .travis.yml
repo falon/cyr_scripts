@@ -38,6 +38,7 @@ before_install:
           #- cat /etc/default/saslauthd
           #- cat /etc/default/cyrus-imapd
         - sudo sed -i 's|MECHANISMS=.*|MECHANISMS="ldap"|' /etc/default/saslauthd
+        - sudo sed -i 's|START=no|START=yes|' /etc/default/saslauthd
         - sudo cp travis/saslauthd.conf /etc/
         - sudo systemctl start saslauthd
         - sudo cp travis/annoIMAP.conf /etc/
