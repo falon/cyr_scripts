@@ -48,7 +48,7 @@ before_install:
 install:
         true
 before_script:
-        - sudo testsaslauthd -u marco.favero@example.com -p password
+        - sudo testsaslauthd -u marco.favero@example.com -p password -f /var/run/saslauthd/mux
 script:
         - cpanm --installdeps --notest .
         - cat /home/travis/.cpanm/work/*/build.log
