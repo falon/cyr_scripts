@@ -19,7 +19,7 @@ addons:
 install:
         true
 before_script:
-        - sudo hostname ldap.example.com
+        - sudo hostname localhost
         #        - export PERL5LIB=/usr/lib/x86_64-linux-gnu/perl5/5.28
         - sudo setup-ds --silent --file=travis/ldap.inf
         - sudo systemctl restart dirsrv     
