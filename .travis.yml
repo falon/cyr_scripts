@@ -16,23 +16,21 @@ addons:
                         - 389-ds
                         - libmozilla-ldap-perl
                           # Scripts dependencies
-                        - libswitch-perl
-                        - libconfig-inifiles-perl
-                        - libdata-validate-domain-perl
-                        - libdate-calc-perl
-                        - libwww-perl
-                        - libmail-imaptalk-perl
-                        - libnet-ldap-perl
-                        - libtemplate-plugin-posix-perl
-                        - libproc-daemon-perl
-                        - libstring-scanf-perl
-                        - libsys-syslog-perl
-                        - liburi-perl
-                        - libunicode-imaputf7-perl
-                        - libperl-version-perl
+                          #- libswitch-perl
+                          #- libconfig-inifiles-perl
+                          #- libdata-validate-domain-perl
+                          #- libdate-calc-perl
+                          #- libwww-perl
+                          #- libmail-imaptalk-perl
+                          #- libnet-ldap-perl
+                          #- libtemplate-plugin-posix-perl
+                          #- libproc-daemon-perl
+                          #- libstring-scanf-perl
+                          #- libsys-syslog-perl
+                          #- liburi-perl
+                          #- libunicode-imaputf7-perl
+                          #- libperl-version-perl
 
-install:
-        true
 before_script:
         - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
         - sudo setup-ds --silent --file=travis/ldap.inf
