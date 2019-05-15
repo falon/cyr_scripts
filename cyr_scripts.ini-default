@@ -7,7 +7,7 @@ user	= cyrusadmin
 pass	= cyrusadmin
 
 [ldap]
-server	= ldap.example.com
+server	= localhost
 port	= 389
 baseDN	= c=it
 user	= uid=admin,c=it

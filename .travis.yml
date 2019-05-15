@@ -25,10 +25,16 @@ before_script:
         - ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/user.ldif
         - cat /etc/imapd.conf
         - cat /etc/default/saslauthd
-        - sudo sed -i 's|MECHANISMS=.*|MECHANISMS=ldap|' cyr
+        - cat /lib/systemd/system/cyrus-imapd.service
+        - sudo sed -i 's|MECHANISMS=.*|MECHANISMS="ldap"|' /etc/default/saslauthd
         - sudo cp travis/saslauthd.conf /etc/
-        - systemctl restart saslauthd
+        - sudo systemctl start saslauthd
+        - sudo cp travis/annoIMAP.conf /etc/
+        - sudo cp travis/imapd.conf /etc/
+        - mkdir -pv /maildata/example.com/maildata1
+        - mkdir -pv /maildata/example.com/maildata2
         - 
+        - sudo systemctl restart cyrus-imapd
 script:
         - ./cyr_version.pl
 after_failure: true
