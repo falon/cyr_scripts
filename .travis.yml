@@ -30,8 +30,7 @@ addons:
                           #- liburi-perl
                           #- libunicode-imaputf7-perl
                           #- libperl-version-perl
-
-before_script:
+before_install:
         - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
         - sudo setup-ds --silent --file=travis/ldap.inf
         - ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/user.ldif
@@ -46,6 +45,9 @@ before_script:
         - sudo mkdir -pv /maildata/example.com/maildata1
         - sudo mkdir -pv /maildata/example.com/maildata2
         - sudo systemctl restart cyrus-imapd
+install:
+        - cpanm --installdeps --notest .
+before_script:
         - sudo testsaslauthd -u marco.favero@example.com -p password
 script:
         - ./cyr_version.pl
