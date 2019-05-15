@@ -3,6 +3,11 @@ c: it
 objectClass: top
 objectClass: country
 
+dn: ou=People,c=it
+ou: people
+objectClass: top
+objectClass: organizationalunit
+
 dn: uid=cyrusadmin,c=it
 mailUserStatus: active
 sn: Administrator
@@ -18,14 +23,14 @@ description: Only for imap administration, no mail
 uid: cyrusadmin
 userPassword: cyrusadmin
 
-dn: o=example.com,c=it
+dn: o=example.com,ou=People,c=it
 associatedDomain: example.com
 objectClass: top
 objectClass: organization
 objectClass: domainRelatedObject
 o: example.com
 
-dn: uid=marco.favero@example.com,o=example.com,c=it
+dn: uid=marco.favero@example.com,o=example.com,ou=People,c=it
 mailHost: localhost
 mailDeliveryOption: mailbox
 mailUserStatus: active

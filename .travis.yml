@@ -21,9 +21,15 @@ install:
 before_script:
         - sudo hostname cyrus.example.com
         - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
-        #        - export PERL5LIB=/usr/lib/x86_64-linux-gnu/perl5/5.28
         - sudo setup-ds --silent --file=travis/ldap.inf
         - ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/user.ldif
-script: true
+        - cat /etc/imapd.conf
+        - cat /etc/default/saslauthd
+        - sudo sed -i 's|MECHANISMS=.*|MECHANISMS=ldap|' cyr
+        - sudo cp travis/saslauthd.conf /etc/
+        - systemctl restart saslauthd
+        - 
+script:
+        - ./cyr_version.pl
 after_failure: true
 #          - cat /home/travis/.cpanm/work/*/build.log
