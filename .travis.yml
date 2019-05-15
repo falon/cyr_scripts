@@ -47,6 +47,7 @@ before_install:
         - sudo mkdir -pv /maildata/example.com/maildata2
         - sudo systemctl restart cyrus-imapd
         - sudo systemctl status saslauthd.service -l
+        - cat /etc/default/saslauthd
 install:
         true
 before_script:
