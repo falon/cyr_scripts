@@ -3,10 +3,11 @@ SuiteSpotUserID= dirsrv
 SuiteSpotGroup= dirsrv
 
 [slapd]
+ServerPort= 389
 SlapdConfigForMC= Yes
 UseExistingMC= 0
 ServerIdentifier= example
-Suffix= c=it
+Suffix= cn=en
 RootDN= cn=Directory Manager
 UseReplication= No
 AddSampleEntries= No
