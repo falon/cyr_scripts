@@ -10,21 +10,36 @@ addons:
                         - sourceline: 'deb http://mirrors.kernel.org/ubuntu/ eoan main universe'
                 packages:
                         - sasl2-bin
-                        - libswitch-perl
                         - cyrus-imapd
                         - cyrus-clients
                         - cyrus-admin
                         - 389-ds
                         - libmozilla-ldap-perl
+                          # Scripts dependencies
+                        - libswitch-perl
+                        - libconfig-inifiles-perl
+                        - libdata-validate-domain-perl
+                        - libdate-calc-perl
+                        - libwww-perl
+                        - libmail-imaptalk-perl
+                        - libnet-ldap-perl
+                        - libtemplate-plugin-posix-perl
+                        - libproc-daemon-perl
+                        - libstring-scanf-perl
+                        - libsys-syslog-perl
+                        - liburi-perl
+                        - libunicode-imaputf7-perl
+                        - libperl-version-perl
+
 install:
         true
 before_script:
         - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
         - sudo setup-ds --silent --file=travis/ldap.inf
         - ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/user.ldif
-        - cat /etc/imapd.conf
-        - cat /etc/default/saslauthd
-        - cat /etc/default/cyrus-imapd
+          #- cat /etc/imapd.conf
+          #- cat /etc/default/saslauthd
+          #- cat /etc/default/cyrus-imapd
         - sudo sed -i 's|MECHANISMS=.*|MECHANISMS="ldap"|' /etc/default/saslauthd
         - sudo cp travis/saslauthd.conf /etc/
         - sudo systemctl start saslauthd
@@ -33,6 +48,7 @@ before_script:
         - sudo mkdir -pv /maildata/example.com/maildata1
         - sudo mkdir -pv /maildata/example.com/maildata2
         - sudo systemctl restart cyrus-imapd
+        - sudo testsaslauthd -u marco.favero@example.com -p password
 script:
         - ./cyr_version.pl
 after_failure: true

@@ -8,7 +8,7 @@ ou: people
 objectClass: top
 objectClass: organizationalunit
 
-dn: uid=cyrusadmin,c=it
+dn: uid=cyrusadmin,ou=People,c=it
 mailUserStatus: active
 sn: Administrator
 objectClass: top
