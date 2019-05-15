@@ -40,14 +40,13 @@ before_install:
         - sudo sed -i 's|MECHANISMS=.*|MECHANISMS="ldap"|' /etc/default/saslauthd
         - sudo sed -i 's|START=no|START=yes|' /etc/default/saslauthd
         - sudo cp travis/saslauthd.conf /etc/
-        - sudo systemctl start saslauthd
+        - sudo systemctl restart saslauthd
         - sudo cp travis/annoIMAP.conf /etc/
         - sudo cp travis/imapd.conf /etc/
         - sudo mkdir -pv /maildata/example.com/maildata1
         - sudo mkdir -pv /maildata/example.com/maildata2
         - sudo systemctl restart cyrus-imapd
         - sudo systemctl status saslauthd.service -l
-        - cat /etc/default/saslauthd
 install:
         true
 before_script:
