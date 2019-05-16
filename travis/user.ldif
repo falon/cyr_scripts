@@ -2,6 +2,8 @@ dn: c=it
 c: it
 objectClass: top
 objectClass: country
+aci: (targetattr != "userPassword") (version 3.0; acl "Anonymous access"; allo
+ w (read, search, compare)userdn = "ldap:///anyone";)
 
 dn: ou=People,c=it
 ou: people

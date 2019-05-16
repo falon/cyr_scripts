@@ -11,6 +11,7 @@ addons:
                 packages:
                         - sasl2-bin
                         - cyrus-imapd
+                        - cyrus-pop3d
                         - cyrus-clients
                         - cyrus-admin
                         - 389-ds
@@ -43,14 +44,16 @@ before_install:
         - sudo systemctl restart saslauthd
         - sudo cp travis/annoIMAP.conf /etc/
         - sudo cp travis/imapd.conf /etc/
+        - sudo sed -i -r 's|^\t+nntp\t+.*||' /etc/cyrus.conf
+        - sudo sed -i -r 's|^\t+http\t+.*||' /etc/cyrus.conf
         - sudo mkdir -pv /maildata/example.com/maildata1
         - sudo mkdir -pv /maildata/example.com/maildata2
+        - chown -r cyrus:mail /maildata
         - sudo systemctl restart cyrus-imapd
         - sudo systemctl status saslauthd.service -l
 install:
         true
 before_script:
-        - sudo ldapsearch -xh localhost -p 389 -b "uid=marco.favero@example.com,o=example.com,ou=People,c=it" -LLL -D "uid=marco.favero@example.com,o=example.com,ou=People,c=it" -w password uid=marco.favero@example.com
         - sudo testsaslauthd -u marco.favero@example.com -p password -f /var/run/saslauthd/mux
 script:
         - cpanm --installdeps --notest .
