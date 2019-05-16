@@ -50,6 +50,7 @@ before_install:
 install:
         true
 before_script:
+        - sudo ldapsearch -xh localhost -p 389 -b "uid=marco.favero@example.com,o=example.com,ou=People,c=it" -LLL -D "uid=marco.favero@example.com,o=example.com,ou=People,c=it" -w password uid=marco.favero@example.com
         - sudo testsaslauthd -u marco.favero@example.com -p password -f /var/run/saslauthd/mux
 script:
         - cpanm --installdeps --notest .
