@@ -48,7 +48,7 @@ before_install:
         - sudo sed -i -r 's|^\t+http\t+.*||' /etc/cyrus.conf
         - sudo mkdir -pv /maildata/example.com/maildata1
         - sudo mkdir -pv /maildata/example.com/maildata2
-        - chown -r cyrus:mail /maildata
+        - sudo chown -R cyrus:mail /maildata
         - sudo systemctl restart cyrus-imapd
         - sudo systemctl status saslauthd.service -l
 install:
