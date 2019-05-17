@@ -10,7 +10,7 @@ pass	= cyrusadmin
 server	= localhost
 port	= 389
 baseDN	= c=it
-user	= uid=admin,c=it
+user	= cn=Directory Manager
 pass	= ldapassword
 
 [logintest]

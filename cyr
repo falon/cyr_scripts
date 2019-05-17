@@ -17,4 +17,4 @@ if [ "$1" == '--help' ] || [ "$1" == '-h' ] || [ "$1" == 'help' ]; then
 fi
 USER=`sed -nr "/^\[imap\]/ { :l /^user\s*[ ]*=/ { s/.*=[ ]*//; s/\s*#.*//; p; q;}; n; b l;}" $HOMEDIR/cyr_scripts.ini`
 echo -en "\nConnecting to server <\e[33m$SERVER\e[39m> with user <\e[33m$USER\e[39m>...\n"
-/usr/bin/cyradm -u $USER $SERVER
+/usr/bin/cyradm -u $USER --auth PLAIN $SERVER
