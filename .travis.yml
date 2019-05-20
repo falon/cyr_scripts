@@ -52,7 +52,7 @@ before_install:
         - sudo systemctl restart cyrus-imapd
         - sudo systemctl status saslauthd.service -l
 install:
-        - sudo cpanm -v Unicode::IMAPUtf7
+        - cpanm -S -v Unicode::IMAPUtf7
         - cp -p cyr_scripts.ini-default cyr_scripts.ini
         - sed -i "s|\/usr\/local\/cyr_scripts\/|$PWD\/|" *.pl
         - sed -i "s|\/usr\/local\/cyr_scripts|$PWD|" cyr
