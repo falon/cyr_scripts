@@ -69,5 +69,6 @@ script:
         - sudo -u cyrus ./cyr_setPartitionAnno.pl -d
         - sudo -u cyrus ./cyr_showServerAnnotation.pl "" "/vendor/CSI/partition/example.com" value.priv
         - sudo -u cyrus ./cyr_checkLDAPUser.pl -u marco.favero@example.com
+        - sudo -u cyrus ./cyr_adduser.pl -u marco.favero@example.com -p maildata1 -q 200 -spamexp 30 -trashexp 15
 after_failure: true
 #          - cat /home/travis/.cpanm/work/*/build.log
