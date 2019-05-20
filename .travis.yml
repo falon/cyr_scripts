@@ -4,7 +4,7 @@ perl:
         - "5.28"
 sudo: false
 addons:
-          apt:
+        apt:
                 update: true
                 sources:
                         - sourceline: 'deb http://mirrors.kernel.org/ubuntu/ eoan main universe'
@@ -16,28 +16,28 @@ addons:
                         - cyrus-admin
                         - 389-ds
                         - libmozilla-ldap-perl
-                          # Scripts dependencies
-                          - libswitch-perl
-                          - libconfig-inifiles-perl
-                          - libdata-validate-domain-perl
-                          - libdate-calc-perl
-                          - libwww-perl
-                          - libmail-imaptalk-perl
-                          - libnet-ldap-perl
-                          - libtemplate-plugin-posix-perl
-                          - libproc-daemon-perl
-                          - libstring-scanf-perl
-                          #- libsys-syslog-perl (already inclided in perl)
-                          - liburi-perl
-                          #- libunicode-imaputf7-perl (to make by source)
-                          - libperl-version-perl
+                        # Scripts dependencies
+                        - libswitch-perl
+                        - libconfig-inifiles-perl
+                        - libdata-validate-domain-perl
+                        - libdate-calc-perl
+                        - libwww-perl
+                        - libmail-imaptalk-perl
+                        - libnet-ldap-perl
+                        - libtemplate-plugin-posix-perl
+                        - libproc-daemon-perl
+                        - libstring-scanf-perl
+                        # - libsys-syslog-perl (already inclided in perl)
+                        - liburi-perl
+                        # - libunicode-imaputf7-perl (to make by source)
+                        - libperl-version-perl
 before_install:
         - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
         - sudo setup-ds --silent --file=travis/ldap.inf
         - ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/user.ldif
-          #- cat /etc/imapd.conf
-          #- cat /etc/default/saslauthd
-          #- cat /etc/default/cyrus-imapd
+        # - cat /etc/imapd.conf
+        # - cat /etc/default/saslauthd
+        # - cat /etc/default/cyrus-imapd
         - sudo sed -i 's|MECHANISMS=.*|MECHANISMS="ldap"|' /etc/default/saslauthd
         - sudo sed -i 's|START=no|START=yes|' /etc/default/saslauthd
         - sudo cp travis/saslauthd.conf /etc/
@@ -54,12 +54,12 @@ before_install:
 install:
         - sudo cpanm -v Unicode::IMAPUtf7
         - cp -p cyr_scripts.ini-default cyr_scripts.ini
-          #- sed -i "s|\/usr\/local\/cyr_scripts\/|$PWD\/|" *.pl
-          #- sed -i "s|\/usr\/local\/cyr_scripts|$PWD|" cyr
+        - sed -i "s|\/usr\/local\/cyr_scripts\/|$PWD\/|" *.pl
+        - sed -i "s|\/usr\/local\/cyr_scripts|$PWD|" cyr
         - sed -i 's|use feature|use experimental|' *.pl
-          #- export PATH=$PATH:/usr/lib/cyrus/bin
-          #- sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)\"[=\1:/usr/lib/cyrus/bin\"[' /etc/sudoers
-          #- sudo mkdir /run/cyr_setPartitionAnno
+        - export PATH=$PATH:/usr/lib/cyrus/bin
+        - sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)\"[=\1:/usr/lib/cyrus/bin\"[' /etc/sudoers
+        - sudo mkdir /run/cyr_setPartitionAnno
         - sudo chown cyrus:mail /run/cyr_setPartitionAnno
 
 before_script:
@@ -67,10 +67,10 @@ before_script:
 
 script:
         - ./cyr_version.pl
-          #- sudo -u cyrus ./cyr_setPartitionAnno.pl -d
-          #- sudo -u cyrus ./cyr_showServerAnnotation.pl "" "/vendor/CSI/partition/example.com" value.priv
-          #- sudo -u cyrus ./cyr_checkLDAPUser.pl -u marco.favero@example.com
-          #- sudo -u cyrus ./cyr_adduser.pl -u marco.favero@example.com -p maildata1 -q 200 -spamexp 30 -trashexp 15
+        - sudo -u cyrus ./cyr_setPartitionAnno.pl -d
+        - sudo -u cyrus ./cyr_showServerAnnotation.pl "" "/vendor/CSI/partition/example.com" value.priv
+        - sudo -u cyrus ./cyr_checkLDAPUser.pl -u marco.favero@example.com
+        - sudo -u cyrus ./cyr_adduser.pl -u marco.favero@example.com -p maildata1 -q 200 -spamexp 30 -trashexp 15
 
 after_failure: true
 #          - cat /home/travis/.cpanm/work/*/build.log
