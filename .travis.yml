@@ -15,6 +15,7 @@ addons:
                         - cyrus-clients
                         - cyrus-admin
                         - 389-ds
+                        - cpanminus
                         - libmozilla-ldap-perl
                         # Scripts dependencies
                         - libswitch-perl
@@ -52,8 +53,7 @@ before_install:
         - sudo systemctl restart cyrus-imapd
         - sudo systemctl status saslauthd.service -l
 install:
-        - sudo chown -R travis /home/travis/.cpanm
-        - cpanm -v Unicode::IMAPUtf7
+        - sudo cpanm -v Unicode::IMAPUtf7
         - cp -p cyr_scripts.ini-default cyr_scripts.ini
         - sed -i "s|\/usr\/local\/cyr_scripts\/|$PWD\/|" *.pl
         - sed -i "s|\/usr\/local\/cyr_scripts|$PWD|" cyr
