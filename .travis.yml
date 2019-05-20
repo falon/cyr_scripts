@@ -58,17 +58,19 @@ install:
         - sed -i "s|\/usr\/local\/cyr_scripts|$PWD|" cyr
         - sed -i 's|use feature|use experimental|' *.pl
         - export PATH=$PATH:/usr/lib/cyrus/bin
-          #- sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)\"[=\1:/usr/lib/cyrus/bin\"[' /etc/sudoers
+        - sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)\"[=\1:/usr/lib/cyrus/bin\"[' /etc/sudoers
         - sudo mkdir /run/cyr_setPartitionAnno
         - sudo chown cyrus:mail /run/cyr_setPartitionAnno
 
 before_script:
         - sudo testsaslauthd -u marco.favero@example.com -p password -f /var/run/saslauthd/mux
+
 script:
         - ./cyr_version.pl
-        - sudo -u cyrus ./cyr_setPartitionAnno.pl -d
-        - sudo -u cyrus ./cyr_showServerAnnotation.pl "" "/vendor/CSI/partition/example.com" value.priv
-        - sudo -u cyrus ./cyr_checkLDAPUser.pl -u marco.favero@example.com
-        - sudo -u cyrus ./cyr_adduser.pl -u marco.favero@example.com -p maildata1 -q 200 -spamexp 30 -trashexp 15
+          #- sudo -u cyrus ./cyr_setPartitionAnno.pl -d
+          #- sudo -u cyrus ./cyr_showServerAnnotation.pl "" "/vendor/CSI/partition/example.com" value.priv
+          #- sudo -u cyrus ./cyr_checkLDAPUser.pl -u marco.favero@example.com
+          #- sudo -u cyrus ./cyr_adduser.pl -u marco.favero@example.com -p maildata1 -q 200 -spamexp 30 -trashexp 15
+
 after_failure: true
 #          - cat /home/travis/.cpanm/work/*/build.log
