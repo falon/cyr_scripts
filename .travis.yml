@@ -55,6 +55,7 @@ before_install:
 install:
         - sudo cpanm -v Unicode::IMAPUtf7
         - cp -p cyr_scripts.ini-default cyr_scripts.ini
+        - sudo chown cyrus:mail cyr_scripts.ini
         - sed -i "s|\/usr\/local\/cyr_scripts\/|$PWD\/|" *.pl
         - sed -i "s|\/usr\/local\/cyr_scripts|$PWD|" cyr
         - sed -i 's|use feature|use experimental|' *.pl
@@ -62,6 +63,7 @@ install:
         - sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)\"[=\1:/usr/lib/cyrus/bin\"[' /etc/sudoers
         - sudo mkdir /run/cyr_setPartitionAnno
         - sudo chown cyrus:mail /run/cyr_setPartitionAnno
+        - sudo chmod 644 core.pl cyr_scripts.ini
 
 before_script:
         - sudo testsaslauthd -u marco.favero@example.com -p password -f /var/run/saslauthd/mux
