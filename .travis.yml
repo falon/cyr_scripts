@@ -65,6 +65,7 @@ install:
 
 before_script:
         - sudo testsaslauthd -u marco.favero@example.com -p password -f /var/run/saslauthd/mux
+        - sudo chmod 700 travis/test_suite.sh
 
 script:
         - travis/test_suite.sh 
