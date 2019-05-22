@@ -66,7 +66,7 @@ install:
         # We need to own the home script folder to write conf with Perl
         - sudo chgrp mail ../cyr_scripts
         # We need to enter travid folder to access files with user cyrus
-        - sudo useradd -G travis cyrus
+        - sudo useradd -g travis cyrus
 
 before_script:
         - sudo testsaslauthd -u marco.favero@example.com -p password -f /var/run/saslauthd/mux
