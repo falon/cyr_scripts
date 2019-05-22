@@ -3,7 +3,7 @@
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
 #########  Build release  #########
-our $build = '0.1.7 - 13 May 2019';
+our $build = '0.1.8 - 22 May 2019';
 ###################################
 
 

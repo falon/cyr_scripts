@@ -14,6 +14,7 @@ sudo -u cyrus ./cyr_setPartitionAnno.pl -d
 ./cyr_moveMailboxPart.pl -mboxold marco.favero@example.com -folderold "Tutti là" -mboxnew marco.favero@example.com -foldernew "Tutti quà"
 ./cyr_moveMailboxPart.pl -file travis/moveMailboxPart.txt
 ./cyr_setACL.pl -u marco.favero@example.com -folder INBOX -uid gianni@example.com -right write
+./cyr_setACL.pl -file travis/setACL.txt
 ./cyr_setAnnotation.pl -user gianni@example.com -folder "Nuovo falò/Trash" -anno expire -value 55
 ./cyr_setServerAnnotation.pl "" /vendor/CSI/partition/mydomain.com value.priv dummydata
 ./cyr_showServerAnnotation.pl "" /vendor/CSI/partition/* value.priv
@@ -22,3 +23,4 @@ sudo -u cyrus ./cyr_setconf.pl partition algo rr
 ./cyr_setquota.pl -u gianni@example.com -folder INBOX -quota 50
 ./cyr_setquota.pl -file travis/setquota.txt
 ./cyr_showuser.pl -d example.com
+./cyr_showuser.pl -u gianni@example.com
