@@ -78,4 +78,4 @@ script:
 
 after_failure:
         - cat travis/test.log
-        - sudo cat /etc/sudoers
+        - sudo ls -l    /home/travis/build/falon/cyr_scripts /home/travis/build/falon /home/travis/build  /home/travis  /home
