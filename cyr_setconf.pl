@@ -109,6 +109,8 @@ given ( $new_value ) {
 		$cfg->SetParameterTrailingComment($section, $par, ("Modified on $thistime by $addinfo $0"));
 		$cfg->setval($section, $par, $new_value);
 		$result = $cfg->RewriteConfig;
+		defined $result
+			or $result = 0;
 		if ($result == 1) {
 			$exit = 0;
 			$status = 'success';

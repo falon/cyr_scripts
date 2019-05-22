@@ -1,0 +1,3 @@
+marco.favero@example.com;INBOX;gianni@example.com;read
+marco.favero@example.com;Ecco laggiù;gianni@example.com;read
+gianni@example.com;Nuovo falò/Spam;marco.favero@example.com;append

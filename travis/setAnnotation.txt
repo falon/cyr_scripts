@@ -1,0 +1,2 @@
+marco.favero@example.com;Ecco laggiù/Spam;expire;120
+gianni@example.com;INBOX;comment;This is a comment.

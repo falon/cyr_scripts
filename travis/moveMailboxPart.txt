@@ -1,0 +1,2 @@
+marco.favero@example.com;Tutti quà;marco.favero@example.com;Ecco laggiù;
+gianni@example.com;falò;gianni@example.com;Nuovo falò;

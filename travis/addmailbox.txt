@@ -1,0 +1,2 @@
+pluto@example.com;maildata1;200
+minni@example.com;maildata2;300

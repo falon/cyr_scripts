@@ -35,7 +35,7 @@ sub wchomp {
 # We redefine chomp to work with CRLF too.
 # It works by references.
 	foreach (@_) {
-		$_ =~ s/\r[\n]*//gm;
+		$_ =~ s/[\r\n]*//gm;
 	}
 }
 
@@ -54,6 +54,8 @@ sub composembx {
     		return "$nsp$sep$rootmbx";
  	} else {
 		my ($uid,$dom) = split('@',$rootmbx);
+		defined ( $dom )
+			or return "$nsp$sep$uid$sep$folder";
 		return "$nsp$sep$uid$sep$folder\@$dom";
 	}
 }
@@ -787,7 +789,7 @@ sub setACL {
   if ($cyrus->error) {
 	$status='fail';
 	$sev='LOG_ERR';
-	$error=$cyrus->error;
+	$error= ' error="' . $cyrus->error . '"';
 	$return=0;
   }
   else {
@@ -797,7 +799,7 @@ sub setACL {
 	$return=1;
   }
   $folder = decodefoldername($subfolder, $imaputf7, $code);
-  printLog($sev,"action=setimapacl status=$status error=\"$error\" mailbox=\"$user\" folder=\"$folder\" uid=$who right=$right", $v);
+  printLog($sev,"action=setimapacl status=${status}${error} mailbox=\"$user\" folder=\"$folder\" uid=$who right=$right", $v);
   closelog();
   return $return;
 }

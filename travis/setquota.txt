@@ -1,0 +1,2 @@
+pino@example.com;INBOX;50
+marco.favero@example.com;Ecco laggiù;500

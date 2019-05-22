@@ -1,0 +1,2 @@
+gianni@example.com;falò;
+marco.favero@example.com;Tutti là;

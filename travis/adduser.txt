@@ -1,0 +1,2 @@
+paolo@example.com;maildata1;200;5;4
+gianni@example.com;maildata2;300;2;3

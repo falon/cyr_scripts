@@ -49,6 +49,7 @@ if (! defined($ARGV[0]) ) {
 	die($usage);
 }
 
+require "/usr/local/cyr_scripts/core.pl";
 for ( $ARGV[0] ) {
          if    (/^-u/)  {
 		GetOptions(
@@ -89,7 +90,7 @@ for ( $ARGV[0] ) {
 		foreach $line (@raw_data)
 		{
 			wchomp($line);
-			@PARAM=split(/\;/,$line,2);
+			@PARAM=split(/\;/,$line,3);
 			if ($#PARAM != 2) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
 			else {
 				($user[$i],$fdr,$quota[$i])=@PARAM;
@@ -118,7 +119,6 @@ use Cyrus::IMAP::Admin;
 # assuming all necessary variables have been declared and filled accordingly:
 #
 
-require "/usr/local/cyr_scripts/core.pl";
 
 my $auth = {
     -mechanism => 'login',
