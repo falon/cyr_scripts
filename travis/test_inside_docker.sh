@@ -119,4 +119,4 @@ test_exit=$?
 # Verify preun/postun in the spec file
 yum remove -y 'cyrus-imapd-scripts'
 
-return $test_exit
+exit $test_exit
