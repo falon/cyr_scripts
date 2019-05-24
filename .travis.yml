@@ -2,7 +2,7 @@ language: perl
 dist: xenial
 perl:
         - "5.28"
-sudo: required
+sudo: false
 env:
         matrix:
                 # OS
@@ -61,14 +61,14 @@ before_install:
         - sudo systemctl restart cyrus-imapd
         - sudo systemctl status saslauthd.service -l
         # Docker
-        - echo 'DOCKER_OPTS="-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock -s devicemapper"' | sudo tee /etc/default/docker > /dev/null
+        - sudo echo 'DOCKER_OPTS="-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock -s devicemapper"' | sudo tee /etc/default/docker > /dev/null
         - if [ ${OS_TYPE} != "ubuntu" ]; then sudo service docker restart; fi
         - if [ ${OS_TYPE} != "ubuntu" ]; then sleep 5; fi
         - if [ ${OS_TYPE} != "ubuntu" ]; then sudo docker pull centos:centos${OS_VERSION}; fi
 install:
         - sudo cpanm -v Unicode::IMAPUtf7
         - cp -p cyr_scripts.ini-default cyr_scripts.ini
-        - sudo chown cyrus:mail cyr_scripts.ini
+        - sudo chgrp mail cyr_scripts.ini
         - sed -i "s|\/usr\/local\/cyr_scripts\/|$PWD\/|" *.pl
         - sed -i "s|\/usr\/local\/cyr_scripts|$PWD|" cyr
         - sed -i 's|use feature|use experimental|' *.pl
