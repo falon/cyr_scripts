@@ -2,7 +2,7 @@
 
 # This script starts docker and systemd (if el7)
 
-if [ "${OS_TYPE}" -eq "ubuntu" ]; then
+if [ "${OS_TYPE}" == "ubuntu" ]; then
 	travis/test_suite.sh
 
 elif [ "${OS_VERSION}" -eq 6 ]; then

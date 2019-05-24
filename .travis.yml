@@ -62,9 +62,9 @@ before_install:
         - sudo systemctl status saslauthd.service -l
         # Docker
         - echo 'DOCKER_OPTS="-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock -s devicemapper"' | sudo tee /etc/default/docker > /dev/null
-        - if [ ${OS_TYPE} -ne "ubuntu" ]; then sudo service docker restart fi
-        - if [ ${OS_TYPE} -ne "ubuntu" ]; then sleep 5 fi
-        - if [ ${OS_TYPE} -ne "ubuntu" ]; then sudo docker pull centos:centos${OS_VERSION} fi
+        - if [ ${OS_TYPE} != "ubuntu" ]; then sudo service docker restart; fi
+        - if [ ${OS_TYPE} != "ubuntu" ]; then sleep 5; fi
+        - if [ ${OS_TYPE} != "ubuntu" ]; then sudo docker pull centos:centos${OS_VERSION}; fi
 install:
         - sudo cpanm -v Unicode::IMAPUtf7
         - cp -p cyr_scripts.ini-default cyr_scripts.ini
