@@ -1,5 +1,5 @@
 ./cyr_version.pl
-sudo -u cyrus ./cyr_setPartitionAnno.pl -d 
+sudo -u cyrus ./cyr_setPartitionAnno.pl -d
 ./cyr_checkLDAPUser.pl -u marco.favero@example.com
 ./cyr_adduser.pl -u marco.favero@example.com -p maildata1 -q 200 -spamexp 30 -trashexp 15
 ./cyr_adduser.pl -file travis/adduser.txt
@@ -18,7 +18,7 @@ sudo -u cyrus ./cyr_setPartitionAnno.pl -d
 ./cyr_setAnnotation.pl -user gianni@example.com -folder "Nuovo falò/Trash" -anno expire -value 55
 ./cyr_setServerAnnotation.pl "" /vendor/CSI/partition/mydomain.com value.priv dummydata
 ./cyr_showServerAnnotation.pl "" /vendor/CSI/partition/* value.priv
-sudo -u cyrus ./cyr_setconf.pl partition algo rr
+./cyr_setconf.pl partition algo rr
 ./cyr_showconf.pl
 ./cyr_setquota.pl -u gianni@example.com -folder INBOX -quota 50
 ./cyr_setquota.pl -file travis/setquota.txt

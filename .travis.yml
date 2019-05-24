@@ -2,7 +2,15 @@ language: perl
 dist: xenial
 perl:
         - "5.28"
-sudo: false
+sudo: required
+env:
+        matrix:
+                # OS
+                - OS_TYPE=ubuntu
+                # - OS_TYPE=centos OS_VERSION=6
+                - OS_TYPE=centos OS_VERSION=7
+        services:
+                - docker
 addons:
         apt:
                 update: true
@@ -52,6 +60,11 @@ before_install:
         - sudo chown -R cyrus:mail /maildata
         - sudo systemctl restart cyrus-imapd
         - sudo systemctl status saslauthd.service -l
+        # Docker
+        - echo 'DOCKER_OPTS="-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock -s devicemapper"' | sudo tee /etc/default/docker > /dev/null
+        - sudo service docker restart
+        - sleep 5
+        - sudo docker pull centos:centos${OS_VERSION}
 install:
         - sudo cpanm -v Unicode::IMAPUtf7
         - cp -p cyr_scripts.ini-default cyr_scripts.ini
@@ -73,7 +86,8 @@ before_script:
         - sudo chmod 700 travis/test_suite.sh
 
 script:
-        - travis/test_suite.sh
+        # Run tests in Container
+        - travis/setup_tests.sh
 
 after_failure:
         - cat travis/test.log
