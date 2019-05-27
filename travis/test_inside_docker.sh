@@ -1,6 +1,7 @@
 #!/bin/bash -x
 
-OS_VERSION=$1
+OS_TYPE=$1
+OS_VERSION=$2
 
 
 # Clean the yum cache
@@ -113,7 +114,7 @@ cd /opt/cyr_scripts
 mkdir /opt/cyr_scripts/travis
 cp -p /setup/travis/*.txt /opt/cyr_scripts/travis
 sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)[=\1:/usr/lib/cyrus-imapd[' /etc/sudoers
-/setup/travis/test_suite.sh
+/setup/travis/test_suite.sh ${OS_TYPE}
 test_exit=$?
 
 exit $test_exit

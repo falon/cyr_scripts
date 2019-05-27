@@ -28,6 +28,8 @@ function travis_test {
     return $status
 }
 
+${OS_TYPE}=$1
+
 LDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 > $LDIR/test.log
 status=0
