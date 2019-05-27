@@ -26,7 +26,7 @@ elif [ "${OS_VERSION}" -eq "7" ]; then
     export DOCKER_CONTAINER_ID=$(sudo docker ps | grep centos | awk '{print $1}')
     sudo docker logs $DOCKER_CONTAINER_ID
     sudo docker exec --tty --interactive $DOCKER_CONTAINER_ID \
-           /bin/bash -xec "bash -x /setup/travis/test_inside_docker.sh ${OS_VERSION};
+           /bin/bash -xc "bash -x /setup/travis/test_inside_docker.sh ${OS_VERSION};
     	   test_exit=$?
            echo -ne \"------\nEND CYRUS SCRIPTS TESTS\n\";"
 

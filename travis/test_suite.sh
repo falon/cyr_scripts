@@ -36,6 +36,12 @@ while read  test || [ -n "$test" ]; do
 	status=$(($status + $?))
 done < $LDIR/TESTLIST
 
+if [ "${OS_TYPE}" = "centos" ]; then
+	# Verify preun/postun in the spec file
+	travis_test yum remove -y 'cyrus-imapd-scripts'
+	status=$(($status + $?))
+fi
+
 printf "%-40s\t[\e[93m %s \e[0m]\n" "./cyr_restorefolder.pl" SKIP
 printf "%-40s\t[\e[93m %s \e[0m]\n" "./cyr_xfer" SKIP
 exit $status

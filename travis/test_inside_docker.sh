@@ -116,7 +116,4 @@ sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)[=\1:/usr/lib/cyrus-imapd
 /setup/travis/test_suite.sh
 test_exit=$?
 
-# Verify preun/postun in the spec file
-yum remove -y 'cyrus-imapd-scripts'
-
 exit $test_exit
