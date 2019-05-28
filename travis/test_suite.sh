@@ -19,7 +19,7 @@ function travis_test {
     echo $ARGUMENTS | xargs $PROG >> $LDIR/test.log 2>&1
     local status=$?
     if [ $status -ne 0 ]; then
-        printf "%-40s\t[\e[31m %s \e[0m]\n" "$PROGNAME" FAIL 
+        printf "%-40s\t[\e[31;5m %s \e[0m]\n" "$PROGNAME" FAIL 
 	echo -e "\e[31mExit Status: $status\e[0m" >> $LDIR/test.log
     else
         printf "%-40s\t[\e[32m %s \e[0m]\n" "$PROGNAME" OK
@@ -28,7 +28,7 @@ function travis_test {
     return $status
 }
 
-${OS_TYPE}=$1
+OS_TYPE=$1
 
 LDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 > $LDIR/test.log

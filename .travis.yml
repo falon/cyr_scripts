@@ -6,9 +6,10 @@ sudo: false
 env:
         matrix:
                 # OS
-                - OS_TYPE=ubuntu
-                # - OS_TYPE=centos OS_VERSION=6
-                - OS_TYPE=centos OS_VERSION=7
+                - OS_TYPE=ubuntu CYR_VERSION=3
+                - OS_TYPE=centos OS_VERSION=6 CYR_VERSION=2
+                - OS_TYPE=centos OS_VERSION=7 CYR_VERSION=2
+		- OS_TYPE=centos OS_VERSION=7 CYR_VERSION=3
         services:
                 - docker
 addons:
