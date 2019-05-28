@@ -1,3 +1,4 @@
+![travis](https://travis-ci.org/falon/cyr_scripts.svg?branch=master)
 # cyr_scripts
 
 With these utilities you can manage Cyrus-IMAPD from command line with many classic command (create, del, set quota on accounts).
