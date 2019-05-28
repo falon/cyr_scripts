@@ -5,6 +5,7 @@
 if [ "${OS_TYPE}" = "ubuntu" ]; then
 	echo -en "\n\n \e[44;97m** SCRIPTS TEST **\e[0m\n\n"
 	travis/test_suite.sh
+	exit $?
 
 elif [ "${OS_VERSION}" -eq "6" ]; then
 
