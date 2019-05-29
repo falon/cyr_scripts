@@ -6,36 +6,36 @@ CYR_VERSION=$3
 
 
 # Clean the yum cache
-echo -en "\n\n \e[44;97mClean YUM Cache\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97mClean YUM Cache\e[0m\n\n"
 yum -y clean all
 yum -y clean expire-cache
 #yum -y update  # Update the OS packages
 
 # First, install all the needed packages.
-echo -en "\n\n \e[44;97m INSTALL REPOs AND MAIN SYSTEM REQUIREMENTS\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97m INSTALL REPOs AND MAIN SYSTEM REQUIREMENTS\e[0m\n\n"
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-${OS_VERSION}.noarch.rpm \
   http://repository.it4i.cz/mirrors/repoforge/redhat/el${OS_VERSION}/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el${OS_VERSION}.rf.x86_64.rpm
 
 yum -y install yum-plugin-priorities rpm-build git tar gzip autotools sudo
 
 # Prepare the RPM environment
-echo -en "\n\n \e[44;97m PREPARE THE RPM BUILD ENVIRONMENT\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97m PREPARE THE RPM BUILD ENVIRONMENT\e[0m\n\n"
 mkdir -vp /tmp/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 if [ "${OS_VERSION}" -eq "6" ]; then
-	echo -en "\n\n \e[44;97m BUILD CYRUS 2.4\e[0m\n\n"
+	echo -en "\n\n \e[48;5;17;97m BUILD CYRUS 2.4\e[0m\n\n"
 	yum install -y cyrus-sasl-devel tcp_wrappers openssl-devel pcre-devel krb5-devel flex bison automake zlib-devel openldap-devel perl-ExtUtils-MakeMaker gcc
 	rpmbuild --define '_topdir /tmp/rpmbuild' --rebuild http://www.invoca.ch/pub/packages/cyrus-imapd/RPMS/ils-6/SRPMS/cyrus-imapd-2.4.20-2.el6.src.rpm
 fi
 
 # Install environment
-echo -en "\n\n \e[44;97m INSTALL 389DS\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97m INSTALL 389DS\e[0m\n\n"
 yum install -y cyrus-sasl-plain \
 	cyrus-sasl \
 	389-ds-base
 
 # Configure environment
 # LDAP
-echo -en "\n\n \e[44;97m CONFIGURE LDAP\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97m CONFIGURE LDAP\e[0m\n\n"
 if [ "${OS_VERSION}" -eq "6" ]; then
 	echo Create user dirsrv...
 	useradd -b /var/lib/dirsrv -d /var/lib/dirsrv -s /usr/sbin/nologin -U dirsrv
@@ -47,7 +47,7 @@ setup-ds.pl --debug --silent --file=/setup/travis/ldap.inf
 popd
 ldapadd -D "cn=directory manager" -w ldapassword -vvv -f /setup/travis/user.ldif
 # SASL
-echo  -en "\n\n \e[44;97mCONFIGURE SASLAUTHD\e[0m\n\n"
+echo  -en "\n\n \e[48;5;17;97mCONFIGURE SASLAUTHD\e[0m\n\n"
 sed -i 's|MECH=.*|MECH=ldap|' /etc/sysconfig/saslauthd
 cp -v /setup/travis/saslauthd.conf /etc/
 if [ "${OS_VERSION}" -eq "7" ]; then
@@ -56,7 +56,7 @@ elif [ "${OS_VERSION}" -eq "6" ]; then
 	service saslauthd start
 fi
 # IMAP
-echo -en "\n\n \e[44;97mINSTALL CYRUS IMAP\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97mINSTALL CYRUS IMAP\e[0m\n\n"
 if [ "${OS_VERSION}" -eq "6" ]; then
 	yum -y install /tmp/rpmbuild/RPMS/x86_64/cyrus-imapd-2.4.20-2.el6.x86_64.rpm /tmp/rpmbuild/RPMS/x86_64/cyrus-imapd-utils-2.4.20-2.el6.x86_64.rpm
 elif [ "${OS_VERSION}" -eq "7" ]; then
@@ -67,7 +67,7 @@ elif [ "${OS_VERSION}" -eq "7" ]; then
 	fi
 	yum -y install cyrus-imapd cyrus-imapd-utils
 fi
-echo -en "\n\n \e[44;97m CONFIGURE CYRUS IMAP\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97m CONFIGURE CYRUS IMAP\e[0m\n\n"
 cp -v /setup/travis/annoIMAP.conf /etc/
 cp -v /setup/travis/imapd.conf /etc/
 sed -i -r 's|^\s+imaps\s+.*||' /etc/cyrus.conf
@@ -91,7 +91,7 @@ fi
 
 # Install prerequisites
 # Local install
-echo -en "\n\n \e[44;97mINSTALL SCRIPTS PREREQUISITES\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97mINSTALL SCRIPTS PREREQUISITES\e[0m\n\n"
 yum install -y /setup/rpm/perl-Config-IniFiles-3.000002-1.el${OS_VERSION}.noarch.rpm
 if [ "${OS_VERSION}" -eq "7" ]; then
     yum -y install /setup/rpm/perl-String-Scanf-2.1-1.2.el${OS_VERSION}.rf.noarch.rpm \
@@ -119,7 +119,7 @@ yum install -y \
 	perl-version \
 	http://repo.openfusion.net/centos${OS_VERSION}-x86_64/perl-Scalar-List-Utils-1.39-1.of.el${OS_VERSION}.x86_64.rpm
 # Prepare the RPM environment
-echo -en "\n\n \e[44;97mMAKE YUM PACKAGES\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97mMAKE YUM PACKAGES\e[0m\n\n"
 
 cp -v /setup/rpm/cyrus-imapd-scripts.spec /tmp/rpmbuild/SPECS
 package_version=`grep Version /setup/rpm/cyrus-imapd-scripts.spec | awk '{print $2}'`
@@ -134,7 +134,7 @@ echo RPMBUILD
 rpmbuild --define '_topdir /tmp/rpmbuild' -ba /tmp/rpmbuild/SPECS/cyrus-imapd-scripts.spec
 
 # After building the RPM, try to install it
-echo -en "\n\n \e[44;97mINSTALL PACKAGES BUILT IN PREVIOUS STEP\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97mINSTALL PACKAGES BUILT IN PREVIOUS STEP\e[0m\n\n"
 RPM_LOCATION=/tmp/rpmbuild/RPMS/noarch
 yum install -y ${RPM_LOCATION}/cyrus-imapd-scripts-${package_version}-${package_release}.el${OS_VERSION}.noarch.rpm
 if [ "${OS_VERSION}" -eq "7" ]; then
@@ -144,7 +144,7 @@ fi
 
 
 ## REAL TEST
-echo -en "\n\n \e[44;97m** SCRIPTS TEST **\e[0m\n\n"
+echo -en "\n\n \e[48;5;17;97m** SCRIPTS TEST **\e[0m\n\n"
 cd /opt/cyr_scripts
 mkdir -v /opt/cyr_scripts/travis
 cp -pv  /setup/travis/*.txt /opt/cyr_scripts/travis

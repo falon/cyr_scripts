@@ -3,7 +3,7 @@
 # This script starts docker and systemd (if el7)
 
 if [ "${OS_TYPE}" = "ubuntu" ]; then
-	echo -en "\n\n \e[44;97m** SCRIPTS TEST **\e[0m\n\n"
+	echo -en "\n\n \e[48;5;17;97m** SCRIPTS TEST **\e[0m\n\n"
 	travis/test_suite.sh
 	exit $?
 
@@ -11,7 +11,7 @@ elif [ "${OS_VERSION}" -eq "6" ]; then
 
 	# Run tests in Container
 	# We use `--privileged` for cgroup compatability
-    echo -en "\n\n \e[44;97mRUN DOCKER\e[0m\n\n"
+    echo -en "\n\n \e[48;5;17;97mRUN DOCKER\e[0m\n\n"
     sudo docker run --privileged --rm=true \
          --volume /sys/fs/cgroup:/sys/fs/cgroup \
          --volume `pwd`:/setup:rw \
@@ -21,7 +21,7 @@ elif [ "${OS_VERSION}" -eq "6" ]; then
 
 elif [ "${OS_VERSION}" -eq "7" ]; then
 
-    echo -en "\n\n \e[44;97mRUN DOCKER\e[0m\n\n"
+    echo -en "\n\n \e[48;5;17;97mRUN DOCKER\e[0m\n\n"
     sudo docker run --privileged --detach --tty --interactive --env "container=docker" \
            --volume /sys/fs/cgroup:/sys/fs/cgroup \
            --volume `pwd`:/setup:rw  \
@@ -36,11 +36,11 @@ elif [ "${OS_VERSION}" -eq "7" ]; then
            echo -ne \"------\nEND CYRUS SCRIPTS TESTS WITH STATUS \$test_exit\n\";
 	   echo \$test_exit > /setup/exit_code.tmp"
 
-    echo -en "\n\n \e[44;97mDOCKER PS\e[0m\n\n"
+    echo -en "\n\n \e[48;5;17;97mDOCKER PS\e[0m\n\n"
     sudo docker ps -a
-    echo -en "\n\n \e[44;97mDOCKER STOP\e[0m\n\n"
+    echo -en "\n\n \e[48;5;17;97mDOCKER STOP\e[0m\n\n"
     sudo docker stop $DOCKER_CONTAINER_ID
-    echo -en "\n\n \e[44;97mDOCKER REMOVE\e[0m\n\n"
+    echo -en "\n\n \e[48;5;17;97mDOCKER REMOVE\e[0m\n\n"
     sudo docker rm -v $DOCKER_CONTAINER_ID
 
 fi
