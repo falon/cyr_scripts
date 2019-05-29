@@ -106,9 +106,6 @@ elif [ "${OS_VERSION}" -eq "6" ]; then
 		perl-Unicode-IMAPUtf7 perl-Data-Validate-Domain 
 fi
 
-mkdir -m 700 -pv /run/cyr_setPartitionAnno
-chown -vR cyrus:mail /run/cyr_setPartitionAnno
-
 yum install -y \
 	perl-Data-Dumper \
 	perl-Date-Calc \

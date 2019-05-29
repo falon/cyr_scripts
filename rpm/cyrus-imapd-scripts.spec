@@ -113,8 +113,10 @@ find %{buildroot}/opt/%{upname} -mindepth 1 -type f | sed -e "s@$RPM_BUILD_ROOT@
 sed -i 's|\"||g' %{_sysconfdir}/%{upname}/cyr_scripts.ini
 %if %systemd
 %systemd_post setPartitionAnno.service
+systemd-tmpfiles --create %{_tmpfilesdir}/setPartitionAnno.conf || true
 %else
 /sbin/chkconfig --add setPartitionAnno || :
+install -m 0700 -o cyrus -g mail -d %{_rundir}/cyr_setPartitionAnno
 %endif
 
 %preun
