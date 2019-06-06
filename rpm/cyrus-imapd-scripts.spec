@@ -142,7 +142,7 @@ exit 0
 
 
 %changelog
-* Wed May 22 2019 Marco Favero <marco.favero@csi.it> 0.1.8-0
+* Thu Jun 06 2019 Marco Favero <marco.favero@csi.it> 0.1.8-0
 - new version.
 - many minor bug fixes.
 - added TRAVIS integration.
