@@ -22,18 +22,18 @@
 
 ## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -u <user> <partition> <quota>\n";
-$usage .= "\t $0 -f <file>\n";
+my $usage  = "\nUsage:\t$0 -u <user> -p <partition> -q <quota>\n";
+$usage .= "\t $0 -file <file>\n";
 $usage .= "\t read a file with lines in the form <user>;<partition>;<quota>.\n";
 $usage .= "\tThis is like cyr_adduser.pl, but it create the INBOX only folder.\n";
 $usage .= "Please, add the LDAP entry before.\n\n";
 
-if (($#ARGV < 1) || ($#ARGV > 3)) {
-        print $usage;
-        exit;
+if (! defined($ARGV[0]) ) {
+	die($usage);
 }
 
 use Config::IniFiles;
+use Getopt::Long;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
@@ -82,15 +82,25 @@ my $cyrus;
 
      for ( $ARGV[0] ) {
          if    (/^-u/)  {
-                if ($#ARGV <3) { print $usage; die("\nI need  <user> <part> <quota>\n"); }
-		$newuser[0] = "$ARGV[1]";
-		$partition[0] = "$ARGV[2]";
-		$quota_size[0] = "$ARGV[3]";
+		GetOptions(
+			'u=s'   => \$newuser[0],
+			'p=s'   => \$partition[0],
+			'q=s'   => \$quota_size[0]
+		) or die ($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
+		if ($newuser[0] =~ /\Q$sep/) {
+			die("\nYou must specify a root mailbox in '-u'.\n$usage");
+		}
 		$i=1;
 	}
-        elsif (/^-f/)  {
-                if ($#ARGV != 1) { print $usage; die ("\nI need the file name!\n"); }
-                $data_file=$ARGV[1];
+        elsif (/^-(-|)file/)  {
+		GetOptions(     'file=s'   => \$data_file,
+		) or die($usage);
+		@ARGV == 0
+			or die("\nToo many arguments.\n$usage");
+		defined($data_file)
+			or die("\nfile required.\n$usage");
                 open(DAT, $data_file) || die("Could not open $data_file!");
                 @raw_data=<DAT>;
                 close(DAT);
@@ -105,7 +115,11 @@ my $cyrus;
                         $i++;
                 }
                 print "\nFound $i accounts\n";
-         }
+        }
+        elsif (/^-(-|)h(elp|)$/) {
+		print $usage;
+		exit 0;
+	}
 	else { die($usage); }
    }
 

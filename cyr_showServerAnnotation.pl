@@ -58,7 +58,7 @@ my $anno = undef;
 my $type = undef;
 my $IMAP;
 my $verbose = 1;
-my $logproc='showServerAnno';
+my $logproc='showServAnn';
 my $logfac = 'LOG_MAIL';
 my $error;
 my $read;
@@ -68,31 +68,35 @@ my $read;
 		$type = "$ARGV[2]";
 
 
-openlog("$logproc/imapconnect",'pid',$logfac);
+openlog("$logproc/cyrusconnect",'pid',$logfac);
 $IMAP = Mail::IMAPTalk->new(
       Server   => $cyrus_server,
       Username => $cyrus_user,
       Password => $cyrus_pass,
       Uid      => 0 );
 $error=$@;
-if (!$IMAP) {
-    printLog('LOG_ERR',"action=imapconnect status=fail error=\"$error\" server=$cyrus_server mailHost=$cyrus_server",$verbose);
-    $exit = 255;
-}
+my $rdlog = rdlog();
 
-$read=$IMAP->getannotation($path,$anno,$type);
-$error=$@;
-if (!$read) {
-	printLog('LOG_ERR',"action=imapread status=fail error=\"$error\" server=$cyrus_server mailHost=$cyrus_server",$verbose);
-	$IMAP->close();
-	closelog();
-	$exit = 1;
+if ( !$IMAP ) {
+        printLog('LOG_ALERT','action=cyrusconnect status=fail error="' . $error . "\" server=$cyrus_server mailHost=${cyrus_server}${rdlog}",$verbose);
+        $exit = 255;
 }
-
-use Data::Dumper;
-$Data::Dumper::Terse = 1;
-#print Dumper($read->{''}->{'/vendor/domain'});
-print Dumper($read);
+else {
+        printLog('LOG_DEBUG',"action=cyrusconnect status=success server=$cyrus_server mailHost=$cyrus_server user=". $cyrus_user .' authz='.$cyrus_user . $rdlog, $verbose);
+	$read=$IMAP->getannotation($path,$anno,$type);
+	$error=$@;
+	if (!$read) {
+                printLog('LOG_ERR',"action=showimapmetadata status=fail error=\"$error\" server=$cyrus_server mailHost=$cyrus_server meta_name=\"$anno\" path=\"$path\" type=$type",$verbose);
+                $exit = 1;
+        }
+        else {
+                use Data::Dumper;
+                $Data::Dumper::Terse = 1;
+                #print Dumper($read->{''}->{'/vendor/domain'});
+                print Dumper($read);
+                printLog('LOG_DEBUG',"action=showimapmetadata status=success server=$cyrus_server mailHost=$cyrus_server meta_name=\"$anno\" path=\"$path\" type=$type", 0);
+	}
+}
 $IMAP->close();
 closelog();
 exit($exit);

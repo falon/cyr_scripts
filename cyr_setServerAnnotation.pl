@@ -40,7 +40,7 @@ use Sys::Syslog;
 #
 # CONFIGURATION PARAMS
 #
-my $logtag = 'setServerAnnotation';
+my $logproc='setServAnn';
 my $logfac = 'LOG_MAIL';
 my $verbose = 1;
 
@@ -57,7 +57,6 @@ my $path = undef;
 my $anno = undef;
 my $value_type = undef;
 my $value = undef;
-my $logproc='setServerAnno';
 my $IMAP;
 
 use Switch;
@@ -72,19 +71,23 @@ if ($#ARGV != 3) {
 
 
 use Sys::Syslog;
-openlog("$logproc/imapconnect",'pid',$logfac);
+openlog("$logproc/cyrusconnect",'pid',$logfac);
 $IMAP = Mail::IMAPTalk->new(
       Server   => $cyrus_server,
       Username => $cyrus_user,
       Password => $cyrus_pass,
       Uid      => 0 );
 $error=$@;
-if (!$IMAP) {
-    printLog('LOG_ERR',"action=imapconnect status=fail error=\"$error\" server=$Server mailHost=$Server",$verbose);
-    $exit = 255;
-}
+my $rdlog = rdlog();
 
-setAnnotationServer($logproc, $IMAP, $path, $anno, $valuetype, $value, TRUE, $verbose)
-	or $exit = 1;
-$IMAP->close();
+if ( !$IMAP ) {
+	printLog('LOG_ALERT','action=cyrusconnect status=fail error="' . $error . "\" server=$cyrus_server mailHost=${cyrus_server}${rdlog}",$verbose);
+	$exit = 255;
+}
+else {
+	printLog('LOG_DEBUG',"action=cyrusconnect status=success server=$cyrus_server mailHost=$cyrus_server user=". $cyrus_user .' authz='.$cyrus_user . $rdlog, $verbose);
+	setAnnotationServer($logproc, $IMAP, $path, $anno, $valuetype, $value, TRUE, $verbose)
+		or $exit = 1;
+	$IMAP->close();
+}
 exit($exit);

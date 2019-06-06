@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # Author: MFF
 # Name: cyr_kidnapping.sh
 # Description: copy all file from a mbpath to a destination folder.

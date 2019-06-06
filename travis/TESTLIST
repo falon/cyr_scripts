@@ -3,8 +3,8 @@ sudo -u cyrus ./cyr_setPartitionAnno.pl -d
 ./cyr_checkLDAPUser.pl -u marco.favero@example.com
 ./cyr_adduser.pl -u marco.favero@example.com -p maildata1 -q 200 -spamexp 30 -trashexp 15
 ./cyr_adduser.pl -file travis/adduser.txt
-./cyr_addmailbox.pl -u pino@example.com maildata1 20 
-./cyr_addmailbox.pl -f travis/addmailbox.txt
+./cyr_addmailbox.pl -u pino@example.com -p maildata1 -q 20 
+./cyr_addmailbox.pl -file travis/addmailbox.txt
 ./cyr_removeDeluser.pl
 ./cyr_delremoved.pl
 ./cyr_deluser.pl -u paolo@example.com

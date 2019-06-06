@@ -39,6 +39,28 @@ sub wchomp {
 	}
 }
 
+sub rdlog {
+# Return structured log with Rundeck ENV
+        my $rdlog='';
+        if (defined $ENV{'RD_JOB_USERNAME'}) {
+                $rdlog = ' orig_user="'.$ENV{'RD_JOB_USERNAME'}.'"';
+        }
+        if (defined $ENV{'RD_JOB_EXECID'}) {
+                $rdlog .= ' rd_execid="'.$ENV{'RD_JOB_EXECID'}.'"';
+        }
+        if (defined $ENV{'RD_JOB_EXECUTIONTYPE'}) {
+                $rdlog .= ' rd_exectype="'.$ENV{'RD_JOB_EXECUTIONTYPE'}.'"';
+        }
+        if (defined $ENV{'RD_JOB_ID'}) {
+                $rdlog .= ' rd_id="'.$ENV{'RD_JOB_ID'}.'"';
+        }
+        if (defined $ENV{'RD_JOB_NAME'}) {
+                $rdlog .= ' rd_name="'.$ENV{'RD_JOB_NAME'}.'"';
+        }
+	return $rdlog;
+}
+
+
 sub composembx {
 # rootmbx is the account name
 #	(alice@example.com)
@@ -150,23 +172,7 @@ sub cyrusconnect {
 	#https://docs.rundeck.com/2.11.3/manual/jobs.html#context-variable-usage
 
 	my ($mainproc, $auth, $Server, $v) = @_;
-
-	my $rdlog='';
-	if (defined $ENV{'RD_JOB_USERNAME'}) {
-		$rdlog = ' orig_user="'.$ENV{'RD_JOB_USERNAME'}.'"';
-	}
-	if (defined $ENV{'RD_JOB_EXECID'}) {
-		$rdlog .= ' rd_execid="'.$ENV{'RD_JOB_EXECID'}.'"';
-	}
-	if (defined $ENV{'RD_JOB_EXECUTIONTYPE'}) {
-		$rdlog .= ' rd_exectype="'.$ENV{'RD_JOB_EXECUTIONTYPE'}.'"';
-	}
-	if (defined $ENV{'RD_JOB_ID'}) {
-		$rdlog .= ' rd_id="'.$ENV{'RD_JOB_ID'}.'"';
-	}
-	if (defined $ENV{'RD_JOB_NAME'}) {
-		$rdlog .= ' rd_name="'.$ENV{'RD_JOB_NAME'}.'"';
-	}
+	my $rdlog=rdlog();
 
 	use Sys::Syslog;
 	openlog("$mainproc/cyrusconn",'pid','LOG_MAIL');
@@ -349,6 +355,7 @@ sub renameFolder {
 	openlog("$mainproc/renFold", "pid", LOG_MAIL);
 	if ( $folder_new eq 'INBOX' ) {
 		printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_old\" newfolder=\"$folder_new\" ${plog}error=\"Can't rename <$folder_old> in destination folder <INBOX>. Choose a destination folder different than INBOX.\"", $v);
+		closelog();
 		return 0;
 	}
 	## Non INBOX folder ##
@@ -359,9 +366,11 @@ sub renameFolder {
 		$folder_new = decodefoldername($folder_new, $imaputf7, $code);
 		if ($cyrus->error) {
 			printLog('LOG_WARNING',"action=renfolder status=fail folder=\"$folder_old\" newfolder=\"$folder_new\" ${plog}error=\"" . $cyrus->error . '"', $v);
+			closelog();
 			return 0;
 		} else {
 			printLog('LOG_INFO',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
+			closelog();
 			return 1;
 		}
 	}
@@ -423,6 +432,7 @@ sub renameFolder {
                         printLog('LOG_INFO',"action=renfolder status=success folder=\"$folder_old\" newfolder=\"$folder_new\" $plog", $v);
                 }
 	}
+	closelog();
 	return $return;
 }
 
@@ -523,7 +533,7 @@ sub setAnnotationMailbox {
   $cyrus->mboxconfig($mailbox,$attr,$value);
   if ($cyrus->error) {
 	$status='fail';
-	$error=' error=' . $cyrus->error .'"';
+	$error=' error="' . $cyrus->error .'"';
 	$sev='LOG_ERR';
 	$return=0;
   }
@@ -648,6 +658,7 @@ sub getPart {
 		}
 	}
 	printLog($sev,"action=getinfo status=$status mailbox=\"$user\" folder=\"$subfolder\" part=${part}${error}", $v);
+	closelog();
 	return $part;
 }
 
@@ -699,6 +710,7 @@ sub getDomainPart {
                 $error='';
 	}
 	printLog($sev,"action=getinfo status=$status mailbox=\"$user\" domain=$dom part=${part}${error}", $v);
+	closelog();
 	return $part;
 }
 
@@ -732,6 +744,7 @@ sub setQuota {
 	}
 	default {
 		printLog('LOG_ERR', "action=setimapquota status=fail error=\"You must provide a quota in MiB, or none\" mailbox=\"$user\" folder=\"$folder\" detail=\"Error reading the new quota value\"", $v);
+		closelog();
 		return 0;
 	}
   }
@@ -914,7 +927,8 @@ sub ldapReplaceMailhost {
 	else {
 		$error="mailHost is <".$entry->get_value( 'mailHost' )."> and should be <$origServer>; mailPostfixTransport is <".$entry->get_value( 'mailPostfixTransport' )."> and should be <lmtp:[$origServer]>";
 		printLog('LOG_ALERT',"action=ldapmod status=fail error=\"$error\" uid=$uid code=$code origMailPostfixTransport=$origMailPostfixTransport mailPostfixTransport=$destServer origMailHost=$origMailHost mailHost=$destServer",$v);
-	return 0;
+		closelog();
+		return 0;
 	}
 
 	$mesg = $ldap->unbind;   # take down session
@@ -1046,6 +1060,7 @@ sub delRemovedUser {
 		}
 		setACL($mainproc, $cyrus, $uid,'INBOX', $cyrus_user,'all', $sep, $v);
 	        if (! deleteMailbox ( $mainproc,$cyrus,$uid, 'INBOX' ,$sep, $v ) ) {
+			closelog();
 			return 0;
 		}
 	}

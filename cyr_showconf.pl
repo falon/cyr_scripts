@@ -44,22 +44,6 @@ else {
 	$exit = 255;
 }
 
-if (defined $ENV{'RD_JOB_USERNAME'}) {
-	$rdlog = ' orig_user="'.$ENV{'RD_JOB_USERNAME'}.'"';
-}
-if (defined $ENV{'RD_JOB_EXECID'}) {
-	$rdlog .= ' rd_execid="'.$ENV{'RD_JOB_EXECID'}.'"';
-}
-if (defined $ENV{'RD_JOB_EXECUTIONTYPE'}) {
-	$rdlog .= ' rd_exectype="'.$ENV{'RD_JOB_EXECUTIONTYPE'}.'"';
-}
-if (defined $ENV{'RD_JOB_ID'}) {
-	$rdlog .= ' rd_id="'.$ENV{'RD_JOB_ID'}.'"';
-}
-if (defined $ENV{'RD_JOB_NAME'}) {
-	$rdlog .= ' rd_name="'.$ENV{'RD_JOB_NAME'}.'"';
-}
-
-
+my $rdlog = rdlog();
 printLog('LOG_INFO', "action=showconf status=${status}${error}${rdlog}",$verbose);
 exit($exit);
