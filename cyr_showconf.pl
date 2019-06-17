@@ -30,7 +30,6 @@ my $verbose=0;
 my $status;
 my $error;
 my $sev;
-my $rdlog='';
 
 openlog("$logproc/master",'pid','LOG_MAIL');
 if ( $cfg->OutputConfigToFileHandle(STDOUT) ) {

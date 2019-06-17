@@ -35,27 +35,14 @@ my $section = $ARGV[0];
 my $par = $ARGV[1];
 my $new_value = $ARGV[2];
 my $old_value = $cfg->val($section,$par);
+defined $old_value
+	or $old_value='';
 
 my $status;
 my $error;
 my $pre_error = undef;
 my $sev;
-my $rdlog = '';
-if (defined $ENV{'RD_JOB_USERNAME'}) {
-	$rdlog = ' orig_user="'.$ENV{'RD_JOB_USERNAME'}.'"';
-}
-if (defined $ENV{'RD_JOB_EXECID'}) {
-	$rdlog .= ' rd_execid="'.$ENV{'RD_JOB_EXECID'}.'"';
-}
-if (defined $ENV{'RD_JOB_EXECUTIONTYPE'}) {
-	$rdlog .= ' rd_exectype="'.$ENV{'RD_JOB_EXECUTIONTYPE'}.'"';
-}
-if (defined $ENV{'RD_JOB_ID'}) {
-	$rdlog .= ' rd_id="'.$ENV{'RD_JOB_ID'}.'"';
-}
-if (defined $ENV{'RD_JOB_NAME'}) {
-	$rdlog .= ' rd_name="'.$ENV{'RD_JOB_NAME'}.'"';
-}
+my $rdlog = rdlog();
 
 given ( $section ) {
 	when ( 'imap' ) {
@@ -107,21 +94,31 @@ given ( $new_value ) {
 			$addinfo= $ENV{'RD_JOB_USERNAME'} . ' using';
 		}
 		$cfg->SetParameterTrailingComment($section, $par, ("Modified on $thistime by $addinfo $0"));
-		$cfg->setval($section, $par, $new_value);
-		$result = $cfg->RewriteConfig;
+		$result = $cfg->setval($section, $par, $new_value);
 		defined $result
 			or $result = 0;
-		if ($result == 1) {
-			$exit = 0;
-			$status = 'success';
-			$error = '';
-			$sev = 'LOG_INFO';
-		}
-		else {
+		if ($result == 0) {
 			$exit = 1;
 			$status = 'fail';
-			$error = ' error="can\'t write config file"';
+			$error = ' error="can\'t write config file, because the parameter doesn\'t exist."';
 			$sev = 'LOG_ERR';
+		}
+		else {
+			$result = $cfg->RewriteConfig;
+			defined $result
+				or $result = 0;
+			if ($result == 1) {
+				$exit = 0;
+				$status = 'success';
+				$error = '';
+				$sev = 'LOG_INFO';
+			}
+			else {
+				$exit = 1;
+				$status = 'fail';
+				$error = ' error="can\'t write config file"';
+				$sev = 'LOG_ERR';
+			}
 		}
 	}
 }
