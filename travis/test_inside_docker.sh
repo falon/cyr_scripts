@@ -92,7 +92,8 @@ fi
 # Install prerequisites
 # Local install
 echo -en "\n\n \e[48;5;17;97mINSTALL SCRIPTS PREREQUISITES\e[0m\n\n"
-yum install -y /setup/rpm/perl-Config-IniFiles-3.000002-1.el${OS_VERSION}.noarch.rpm
+yum install -y http://repo.openfusion.net/centos${OS_VERSION}-x86_64/perl-Scalar-List-Utils-1.39-1.of.el${OS_VERSION}.x86_64.rpm \
+	/setup/rpm/perl-Config-IniFiles-3.000002-1.el${OS_VERSION}.noarch.rpm
 if [ "${OS_VERSION}" -eq "7" ]; then
     yum -y install /setup/rpm/perl-String-Scanf-2.1-1.2.el${OS_VERSION}.rf.noarch.rpm \
         /setup/rpm/perl-Unicode-IMAPUtf7-2.01-1.el${OS_VERSION}.noarch.rpm \
@@ -102,7 +103,7 @@ if [ "${OS_VERSION}" -eq "7" ]; then
         http://repo.openfusion.net/centos${OS_VERSION}-x86_64/perl-Data-Validate-Domain-0.14-1.of.el${OS_VERSION}.noarch.rpm \
 	perl-Getopt-Long perl-Encode perl-Env
 elif [ "${OS_VERSION}" -eq "6" ]; then
-	yum install -y http://repo.openfusion.net/centos6-x86_64//perl-Mail-IMAPTalk-3.01-1.of.el6.noarch.rpm \
+	yum install -y http://repo.openfusion.net/centos6-x86_64/perl-Mail-IMAPTalk-3.01-1.of.el6.noarch.rpm \
 		perl-Unicode-IMAPUtf7 perl-Data-Validate-Domain 
 fi
 
@@ -117,7 +118,6 @@ yum install -y \
 	perl-Sys-Syslog \
 	perl-URI \
 	perl-version \
-	http://repo.openfusion.net/centos${OS_VERSION}-x86_64/perl-Scalar-List-Utils-1.39-1.of.el${OS_VERSION}.x86_64.rpm
 # Prepare the RPM environment
 echo -en "\n\n \e[48;5;17;97mMAKE YUM PACKAGES\e[0m\n\n"
 
