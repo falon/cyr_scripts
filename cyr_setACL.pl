@@ -1,26 +1,15 @@
 #!/usr/bin/perl -w
 #
-# This will set right on mailbox for specific user. Just be 
-# sure that you installed the Cyrus::IMAP perl module.  If you did 
-# 'make all && make install' or installed Cyrus using the FreeBSD ports you
-# don't have to do anything at all.
+# This will set right on mailbox for specific user.
 #
-# Change the params below to match your mailserver settins, and
-# your good to go!
-#
-# Usage:
-#  -u <mailbox> <user> <right>         	   set ACL on <mailbox> with <right> for <user>
-#  -f <file>                               use a file in the form <mailbox> <user> <right>
-
-
-# Config setting#
 
 ## Change nothing below, if you are a stupid user! ##
 
 my $usage  = "\nUsage:\t$0 -u <mailbox> -folder <folder> -uid <user> -right <right>\n";
 $usage .= "\t $0 -file <file> [-utf7]\n";
 $usage .= "\t read a file with lines in the form <mailbox>;<folder>;<user>;<right>.\n";
-$usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n\n";
+$usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n";
+$usage .= "If <folder> = '*' then we set ACL on INBOX and all mailbox subfolders.\n\n";
 
 use Config::IniFiles;
 my $cfg = new Config::IniFiles(
@@ -91,10 +80,12 @@ if (! defined($ARGV[0]) ) {
 		) or die($usage);
 		@ARGV == 0
 			or die("\nToo many arguments.\n$usage");
-                if (defined($fdr)) {
-	                if ($fdr =~ /\Q$sep/) {
+                if (defined($mailbox[0])) {
+	                if ($mailbox[0] =~ /\Q$sep/) {
                         	die("\nYou must specify a root mailbox in '-u'.\n$usage");
 			}
+		}
+		if (defined($fdr)) {
 			$folder[0] = $imaputf7->encode(encode($code,$fdr));
                 }
                 else { $folder[0] = 'INBOX'; }
@@ -146,24 +137,41 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $v)) == 0) {
 }
 
 
-LOOP: for ($c=0;$c<$i;$c++) {
-	$oldright = listACL($logproc, $cyrus, $mailbox[$c], $folder[$c], $who[$c], $sep, $v);
-	if ($oldright eq $right[$c]) {
-		$status='success';
-                $sev='LOG_WARNING';
-                $detail='value unchanged';
-                $error='';
-		openlog("$logproc", "pid", LOG_MAIL);
-		$fdr=decodefoldername($folder[$c],$imaputf7, $code);
-		printLog($sev, "action=setimapacl status=$status error=\"$error\" uid=${who[$c]} mailbox=\"${mailbox[$c]}\" folder=\"$fdr\" right=${right[$c]} detail=\"$detail\"", $v);
-		next LOOP;
+for ($c=0;$c<$i;$c++) {
+	my @mboxfolders = undef;
+	my @mboxfoldersname = undef;
+	if ($folder[$c] eq '*') {
+		my ($uidm,$dom) = split('@',$mailbox[$c]);
+		@mboxfolders = $cyrus->listmailbox('user'.$sep.$uidm.$sep.'*@'.$dom);
+		for ($g=0;$g<=$#mboxfolders;$g++) {
+			($uid,$dom) = split('@',$mboxfolders[$g][0]);
+			substr $uid, 0, 5+length($uidm) +1, ''; # Remove 'user/<name>'
+			$mboxfoldersname[$g] = $uid;
+		}
+		$mboxfoldersname[$g] = 'INBOX';
 	}
-	if ($oldright eq 0) {
-		# Something was wrong reading ACL
-		next LOOP;
+	else {
+		$mboxfoldersname[0] = $folder[$c];
 	}
+	LOOP: for ($f=0;$f<=$#mboxfoldersname;$f++) {
+		$oldright = listACL($logproc, $cyrus, $mailbox[$c], $mboxfoldersname[$f], $who[$c], $sep, $v);
+		if ($oldright eq $right[$c]) {
+			$status='success';
+	                $sev='LOG_WARNING';
+	                $detail='value unchanged';
+	                $error='';
+			openlog("$logproc", "pid", LOG_MAIL);
+			$fdr=decodefoldername($mboxfoldersname[$f],$imaputf7, $code);
+			printLog($sev, "action=setimapacl status=$status error=\"$error\" uid=${who[$c]} mailbox=\"${mailbox[$c]}\" folder=\"$fdr\" right=${right[$c]} detail=\"$detail\"", $v);
+			next LOOP;
+		}
+		if ($oldright eq 0) {
+			# Something was wrong reading ACL
+			next LOOP;
+		}
 
-	setACL($logproc, $cyrus, $mailbox[$c], $folder[$c], $who[$c], $right[$c], $sep, $v)
-		or $exit++;
+		setACL($logproc, $cyrus, $mailbox[$c], $mboxfoldersname[$f], $who[$c], $right[$c], $sep, $v)
+			or $exit++;
+	}
 }
 exit($exit);
