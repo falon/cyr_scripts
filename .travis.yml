@@ -43,7 +43,7 @@ addons:
                         - libperl-version-perl
 before_install:
         - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
-        - sudo setup-ds.pl --silent --file=travis/ldap.inf
+        - sudo /usr/sbin/setup-ds --silent --file=travis/ldap.inf
         - ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/user.ldif
         # - cat /etc/imapd.conf
         # - cat /etc/default/saslauthd
