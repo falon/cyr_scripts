@@ -3,7 +3,7 @@
 
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
-Version: 0.1.8
+Version: 0.1.9
 Release: 0%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
@@ -142,6 +142,8 @@ exit 0
 
 
 %changelog
+* Mon Jan 13 2020 Marco Favero <marco.favero@csi.it> 0.1.9-0
+- minor fix and feature to set ACL on all folders.
 * Thu Jun 06 2019 Marco Favero <marco.favero@csi.it> 0.1.8-0
 - new version.
 - many minor bug fixes.
