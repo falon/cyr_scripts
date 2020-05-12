@@ -44,6 +44,7 @@ addons:
 before_install:
         - sudo sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib/x86_64-linux-gnu/dirsrv/perl/DSUtil.pm
         - sudo /usr/sbin/dscreate -v from-file travis/ldap.inf
+        - sudo ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/CIT.ldif
         - sudo cp travis/97csi-InetMailUser.ldif /etc/dirsrv/slapd-example/schema/
         - sudo /usr/sbin/dsctl restart example
         - ldapadd -D "cn=directory manager" -w ldapassword -vvv -f travis/user.ldif

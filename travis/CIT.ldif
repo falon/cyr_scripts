@@ -1,0 +1,17 @@
+dn: cn=userroot,cn=ldbm database,cn=plugins,cn=config
+changetype: add
+objectClass: top
+objectClass: extensibleObject
+objectClass: nsBackendInstance
+cn: userroot
+nsslapd-suffix: c=it
+
+dn: cn=c\3Dit,cn=mapping tree,cn=config
+changetype: add
+objectClass: top
+objectClass: extensibleObject
+objectClass: nsMappingTree
+cn: c=it
+cn: c\=it
+nsslapd-state: backend
+nsslapd-backend: userroot

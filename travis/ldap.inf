@@ -12,6 +12,8 @@ root_password = ldapassword
 self_sign_cert = False
 
 [backend-userroot]
-create_suffix_entry = True
+# create_suffix_entry does not work until 1.4.1.10 for
+# https://pagure.io/389-ds-base/issue/50928
+create_suffix_entry = False
 sample_entries = no
 suffix = c=it
