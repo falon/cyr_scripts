@@ -16,4 +16,4 @@ self_sign_cert = False
 # https://pagure.io/389-ds-base/issue/50928
 create_suffix_entry = False
 sample_entries = no
-suffix = c=it
+;suffix = c=it # issue 50928
