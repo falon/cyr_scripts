@@ -24,7 +24,7 @@ mkdir -vp /tmp/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 if [ "${OS_VERSION}" -eq "6" ]; then
 	echo -en "\n\n \e[48;5;17;97m BUILD CYRUS 2.4\e[0m\n\n"
 	yum install -y cyrus-sasl-devel tcp_wrappers openssl-devel pcre-devel krb5-devel flex bison automake zlib-devel openldap-devel perl-ExtUtils-MakeMaker gcc
-	rpmbuild --define '_topdir /tmp/rpmbuild' --rebuild http://www.invoca.ch/pub/packages/cyrus-imapd/RPMS/ils-6/SRPMS/cyrus-imapd-2.4.20-2.el6.src.rpm
+	rpmbuild --define '_topdir /tmp/rpmbuild' --rebuild /setup/travis/cyrus-imapd-2.4.20-3.el6.src.rpm
 fi
 
 # Install environment
