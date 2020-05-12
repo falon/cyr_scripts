@@ -43,10 +43,12 @@ if [ "${OS_VERSION}" -eq "6" ]; then
 fi
 sed -i 's/checkHostname {/checkHostname {\nreturn();/g' /usr/lib64/dirsrv/perl/DSUtil.pm
 pushd /setup
-dscreate -v from-file /setup/travis/ldap.inf
-ldapadd -D "cn=directory manager" -w ldapassword -vvv -f /setup/travis/CIT.ldif
-cp /setup/travis/97csi-InetMailUser.ldif /etc/dirsrv/slapd-example/schema/
-dsctl example restart
+## From 1.4.1:
+#dscreate -v from-file /setup/travis/ldap.inf
+#ldapadd -D "cn=directory manager" -w ldapassword -vvv -f /setup/travis/CIT.ldif
+#cp /setup/travis/97csi-InetMailUser.ldif /etc/dirsrv/slapd-example/schema/
+#dsctl example restart
+setup-ds.pl --debug --silent --file=/setup/travis/ldap-old.inf
 popd
 ldapadd -D "cn=directory manager" -w ldapassword -vvv -f /setup/travis/user.ldif
 # SASL

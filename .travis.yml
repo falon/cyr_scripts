@@ -1,10 +1,10 @@
 language: perl
+os: linux
 dist: xenial
 perl:
         - "5.28"
-sudo: false
 env:
-        matrix:
+        jobs:
                 # OS and Cyrus versions
                 - OS_TYPE=ubuntu CYR_VERSION=3
                 - OS_TYPE=centos OS_VERSION=6 CYR_VERSION=2
