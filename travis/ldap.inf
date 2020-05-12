@@ -1,19 +1,17 @@
 [General]
-FullMachineName= localhost
-SuiteSpotUserID= dirsrv
-SuiteSpotGroup= dirsrv
+;config_version = 2
+full_machine_name = localhost
 
 [slapd]
-ServerPort= 389
-SlapdConfigForMC= Yes
-UseExistingMC= 0
-ServerIdentifier= example
-Suffix= c=it
-RootDN= cn=Directory Manager
-UseReplication= No
-AddSampleEntries= No
-InstallLdifFile= none
-AddOrgEntries= Yes
-DisableSchemaChecking= No
-RootDNPwd= ldapassword
-SchemaFile= travis/97csi-InetMailUser.ldif
+;user=dirsrv
+;group= dirsrv
+port= 389
+instance_name = example
+;root_dn = cn=Directory Manager
+root_password = ldapassword
+self_sign_cert = False
+
+[backend-userroot]
+create_suffix_entry = True
+sample_entries = no
+suffix = c=it
