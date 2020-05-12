@@ -140,7 +140,7 @@ for ($c=0;$c<$i;$c++) {
 		or $exit++;
 	createMailbox($logproc, $cyrus, $newuser[$c],'Spam', $partition[$c], $sep, $verbose)
 		or $exit++;
-	setAnnotationMailbox($logproc, $cyrus, $newuser[$c],'Spam', 'expire', $expSpam[$c], $sep, $verbose)
+	setMetadataMailbox($logproc, $cyrus, $newuser[$c],'Spam', 'expire', $expSpam[$c], $sep, $verbose)
 		or $exit++;
 	setACL($logproc, $cyrus, $newuser[$c],'Spam','anyone','p', $sep, $verbose)
 		or $exit++;
@@ -148,7 +148,7 @@ for ($c=0;$c<$i;$c++) {
 		or $exit++;
 	createMailbox($logproc, $cyrus, $newuser[$c], 'Trash', $partition[$c], $sep, $verbose)
 		or $exit++;
-	setAnnotationMailbox($logproc, $cyrus, $newuser[$c], 'Trash', 'expire', $expTrash[$c], $sep, $verbose)
+	setMetadataMailbox($logproc, $cyrus, $newuser[$c], 'Trash', 'expire', $expTrash[$c], $sep, $verbose)
 		or $exit++;
 ##	setACL($logproc, $cyrus, $newuser[$c], 'Trash', $newuser[$c], 'lrswipktecd', $sep, $verbose);
 }

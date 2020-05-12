@@ -138,7 +138,7 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
 
 for ($c=0;$c<$i;$c++) {
 	print "\tSet annotation for User: $newuser[$c]...\n";
-	setAnnotationMailbox($logproc, $cyrus, $newuser[$c],$folder[$c], $anno[$c], $value[$c], $sep, $verbose)
+	setMetadataMailbox($logproc, $cyrus, $newuser[$c],$folder[$c], $anno[$c], $value[$c], $sep, $verbose)
 		or $exit++;
 }
 exit($exit);

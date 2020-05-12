@@ -513,7 +513,7 @@ sub changeOXIMAPServer {
 
 
 
-sub setAnnotationMailbox {
+sub setMetadataMailbox {
 
   my ($mainproc, $cyrus, $user, $subfolder, $attr, $value, $sep, $v) = @_;
   use Sys::Syslog;
@@ -526,7 +526,7 @@ sub setAnnotationMailbox {
   my $error;
   my $code = 'ISO-8859-1';
   my $imaputf7 = Unicode::IMAPUtf7->new();
-  openlog("$mainproc/setAnMbox", "pid", LOG_MAIL);
+  openlog("$mainproc/setMetaMbox", "pid", LOG_MAIL);
 
   $mailbox=composembx($user,$subfolder,$sep,'user');
   $folder = decodefoldername($subfolder, $imaputf7, $code);
