@@ -63,7 +63,7 @@ fi
 # IMAP
 echo -en "\n\n \e[48;5;17;97mINSTALL CYRUS IMAP\e[0m\n\n"
 if [ "${OS_VERSION}" -eq "6" ]; then
-	yum -y install /tmp/rpmbuild/RPMS/x86_64/cyrus-imapd-2.4.20-2.el6.x86_64.rpm /tmp/rpmbuild/RPMS/x86_64/cyrus-imapd-utils-2.4.20-2.el6.x86_64.rpm
+	yum -y install /tmp/rpmbuild/RPMS/x86_64/cyrus-imapd-2.4.20-3.el6.x86_64.rpm /tmp/rpmbuild/RPMS/x86_64/cyrus-imapd-utils-2.4.20-3.el6.x86_64.rpm
 elif [ "${OS_VERSION}" -eq "7" ]; then
 	if [ "${CYR_VERSION}" -eq "3" ]; then
 		# Install Cyrus 3 from uxrepo
