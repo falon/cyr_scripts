@@ -1,26 +1,26 @@
-./cyr_version.pl
+./cyr_version.pl -h localhost
 sudo -u cyrus ./cyr_setPartitionAnno.pl -d
 ./cyr_checkLDAPUser.pl -u marco.favero@example.com
-./cyr_adduser.pl -u marco.favero@example.com -p maildata1 -q 200 -spamexp 30 -trashexp 15
-./cyr_adduser.pl -file travis/adduser.txt
-./cyr_addmailbox.pl -u pino@example.com -p maildata1 -q 20 
-./cyr_addmailbox.pl -file travis/addmailbox.txt
-./cyr_removeDeluser.pl
+./cyr_adduser.pl -u marco.favero@example.com -h localhost -p maildata1 -q 200 --spamexp 30 --trashexp 15
+./cyr_adduser.pl --file travis/adduser.txt -h localhost
+./cyr_addmailbox.pl -u pino@example.com -h localhost -p maildata1 -q 20 
+./cyr_addmailbox.pl --file travis/addmailbox.txt -h localhost
+./cyr_removeDeluser.pl -d example.com
 ./cyr_delremoved.pl
-./cyr_deluser.pl -u paolo@example.com
-./cyr_deluser.pl -f travis/deluser.txt
-./cyr_setACL.pl -u marco.favero@example.com -folder INBOX -uid gianni@example.com -right write
-./cyr_setACL.pl -file travis/setACL.txt
-./cyr_moveINBOX.pl -user pino@example.com -folder "Posta Archiviata"
-./cyr_moveINBOX.pl -file travis/moveINBOX.txt
-./cyr_moveMailboxPart.pl -mboxold marco.favero@example.com -folderold "Tutti là" -mboxnew marco.favero@example.com -foldernew "Tutti quà"
-./cyr_moveMailboxPart.pl -file travis/moveMailboxPart.txt
-./cyr_setMetadata.pl -user gianni@example.com -folder "Nuovo falò/Trash" -anno expire -value 55
-./cyr_setServerAnnotation.pl "" /vendor/CSI/partition/mydomain.com value.priv dummydata
-./cyr_showServerAnnotation.pl "" /vendor/CSI/partition/* value.priv
+./cyr_deluser.pl -u paolo@example.com -h localhost
+./cyr_deluser.pl -f travis/deluser.txt -h localhost
+./cyr_setACL.pl -u marco.favero@example.com -h localhost --folder INBOX --uid gianni@example.com --right write
+./cyr_setACL.pl --file travis/setACL.txt -h localhost
+./cyr_moveINBOX.pl --user pino@example.com -h localhost --folder "Posta Archiviata"
+./cyr_moveINBOX.pl --file travis/moveINBOX.txt -h localhost
+./cyr_moveMailboxPart.pl --mboxold marco.favero@example.com -h localhost --folderold "Tutti là" --mboxnew marco.favero@example.com --foldernew "Tutti quà"
+./cyr_moveMailboxPart.pl --file travis/moveMailboxPart.txt -h localhost
+./cyr_setMetadata.pl --user gianni@example.com -h localhost --folder "Nuovo falò/Trash" --anno expire --value 55
+./cyr_setServerAnnotation.pl -h localhost --anno=/vendor/csi/partition/mydomain.com --type=private --value=dummydata
+./cyr_showServerAnnotation.pl -h localhost --anno=/vendor/csi/partition/* --type=private
 ./cyr_setconf.pl partition algo rr
 ./cyr_showconf.pl
-./cyr_setquota.pl -u gianni@example.com -folder INBOX -quota 50
-./cyr_setquota.pl -file travis/setquota.txt
-./cyr_showuser.pl -d example.com
-./cyr_showuser.pl -u gianni@example.com
+./cyr_setquota.pl -u gianni@example.com -h localhost --folder INBOX --quota 50
+./cyr_setquota.pl --file travis/setquota.txt -h localhost
+./cyr_showuser.pl -d example.com -h localhost
+./cyr_showuser.pl -u gianni@example.com -h localhost

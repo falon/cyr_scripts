@@ -3,7 +3,7 @@
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
 #########  Build release  #########
-our $build = '0.1.9 - 13 Jan 2020';
+our $build = '0.2.0 - 01 Jun 2020';
 ###################################
 
 
@@ -217,12 +217,30 @@ sub cyrusVersion {
 	return 'NIL';
 }
 
+sub cyrusVersion_byIMAPTalk {
+# Query the Cyrus IMAP version
+        my ($client) = @_;
+        my $info;
+        $client->_require_capability('id') || return 'NIL';
+        $info = $client->_imap_cmd("id", 0, "id", ("NIL"));
+        while ($info =~ s/\"([^\"]+)\"\s+(\"[^\"]+\"|NIL)\s*//) {
+                my $field = $1;
+                my $value = $2;
+                $value =~ s/\"//g;
+                if ($field eq 'version') {
+                        return $value;
+                }
+        }
+        return 'NIL';
+}
+
+
 sub createMailbox {
 
   use Sys::Syslog;
   use Unicode::IMAPUtf7;
   use Encode;
-  my ($mainproc, $cyrus, $user, $subfolder, $partition, $sep, $v) = @_;
+  my ($mainproc, $cyrus, $user, $subfolder, $partition, $sep, $v, $specialuse) = @_;
 
   my $code = 'ISO-8859-1';
   my $status;
@@ -231,7 +249,21 @@ sub createMailbox {
   my $severity;
   my $imaputf7 = Unicode::IMAPUtf7->new();
   my $mailbox=composembx($user,$subfolder,$sep,'user');
-  $cyrus->create($mailbox,$partition);
+  if ($specialuse) {
+	  # RFC 6154 section 2
+	  my %special = map { $_ => 1 } ('Archive', 'Drafts', 'Flagged', 'Junk', 'Sent', 'Trash');
+	  if(exists($special{$specialuse})) {
+		my %ops = ('-specialuse', "\\$specialuse");
+	  	$cyrus->create($mailbox,$partition,\%ops);
+	  }
+	  else {
+		$cyrus->{error} = "<$specialuse> is not on standard RFC6154";
+	  }
+  }
+  else {
+	$specialuse = 'none';
+  	$cyrus->create($mailbox,$partition);
+  }
   openlog("$mainproc/addMbox", "pid", LOG_MAIL);
   $folder = decodefoldername($subfolder, $imaputf7, $code);
   if ($cyrus->error) {
@@ -246,7 +278,7 @@ sub createMailbox {
 	$error = '';
   }
   if (!defined($partition)) {$partition='root partition of mailbox or autoselected by Cyrus';}
-  printLog($severity, "action=addmailbox status=$status mailbox=\"$user\" folder=\"$folder\" part=\"$partition\"${error}", $v);
+  printLog($severity, "action=addmailbox status=$status mailbox=\"$user\" folder=\"$folder\" part=\"$partition\" special=$specialuse${error}", $v);
   closelog();
   return $return;
 }
@@ -528,6 +560,7 @@ sub setMetadataMailbox {
   my $imaputf7 = Unicode::IMAPUtf7->new();
   openlog("$mainproc/setMetaMbox", "pid", LOG_MAIL);
 
+  return 0 if (not defined $attr or not defined $value);
   $mailbox=composembx($user,$subfolder,$sep,'user');
   $folder = decodefoldername($subfolder, $imaputf7, $code);
   $cyrus->mboxconfig($mailbox,$attr,$value);
@@ -607,6 +640,65 @@ sub setAnnotationServer {
   closelog();
   return $return;
 }
+
+sub setMetadataServer {
+
+  my ($mainproc, $imap, $path, $anno, $valuetype, $value, $v) = @_;
+  openlog("$mainproc/setMdServer", "pid", LOG_MAIL);
+
+  my $return=1;
+  my $error='';
+  my $detail=$error;
+  my $sev='LOG_INFO';
+  # Check for ascii value, else exit
+  if (!checkascii($value)) {
+        $error='values is not ASCII';
+        $status='fail';
+        $sev='LOG_ERR';
+        $return=0;
+  }
+  if ($return == 1) {
+        # Read current value, if it exists
+	$read=$imap->getmetadata($path, {depth => 'infinity'}, "/$valuetype$anno");
+        $oldvalue=$read->{$path}->{$anno}->{$valuetype};
+        if (!defined($oldvalue)) {$oldvalue = 'NIL';}
+
+        # Check if value has to be changed, else exit
+        if ($oldvalue eq $value) {
+                $status='success';
+                $sev='LOG_WARNING';
+                $detail='value unchanged';
+                $error='';
+                $return=0;
+        }
+  }
+
+  if ($return == 0) {
+        printLog($sev, "action=setimapmetadata status=$status error=\"$error\" detail=\"$detail\" meta_name=\"$anno\" meta_oldvalue=\"$oldvalue\" meta_value=\"$value\" path=\"$path\"", $v);
+        closelog();
+        return $return;
+  }
+
+  # Set annotation value
+  $result=$imap->setmetadata($path,"/$valuetype$anno", $value);
+  if (!$result)
+  {
+        $sev='LOG_ALERT';
+        $status='fail';
+        $error=$@;
+        $detail='';
+        $return=0;
+  }
+  else {
+        $status='success';
+        $detail='value changed';
+  }
+
+  printLog($sev, "action=setimapmetadata status=$status error=\"$error\" detail=\"$detail\" meta_name=\"$anno\" meta_oldvalue=\"$oldvalue\" meta_value=\"$value\" path=\"$path\"", $v);
+  closelog();
+  return $return;
+}
+
 
 sub getPart {
 	my ($mainproc, $cyrus, $user, $subfolder, $sep, $v) = @_;
@@ -945,11 +1037,11 @@ sub prepareXferDomain {
 	openlog("$mainproc/prepXferDom", "pid", LOG_MAIL);
         if ( !($ldap=ldapconnect($mainproc, $ldapServer, $ldapPort, $v)) ) {
                 closelog();
-                return 0;
+                return 255;
         }
         if ( ($mesg=ldapbind($mainproc, $ldap, $ldapServer, $ldapPort, $ldapBindUid, $ldapBindPwd, $v)) == 0 ) {
                 closelog();
-                return 0;
+                return 255;
         }
 
         $mesg = $ldap->search( # perform a search
@@ -962,7 +1054,7 @@ sub prepareXferDomain {
                 $code=$mesg->code;
                 printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" uid=$uid code=$code server=$ldapServer port=$ldapPort bind=\"$ldapBindUid\"",$v);
                 closelog();
-                return 0;
+                return 255;
         }
         $nret = $mesg->count;
 	print "\n$nret mailboxes found!\n\n";
@@ -978,7 +1070,7 @@ sub prepareXferDomain {
         $mesg = $ldap->unbind;   # take down session
         $ldap->disconnect ($ldapServer, port => $ldapPort);
 	closelog();
-	return 1;
+	return 0;
 }
 
 
@@ -1079,7 +1171,7 @@ sub removeDelUser {
 	use Date::Calc qw(Delta_Days Add_Delta_Days Today Date_to_Text_Long Decode_Language);
 	use String::Scanf;
 
-        my ($mainproc,$ldapServer,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_server,$cyrus_user,$cyrus_pass,$gracedays,$sep,$v) = @_;
+        my ($mainproc,$ldapServer,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_user,$cyrus_pass,$gracedays,$sep,$v) = @_;
 
 	my $return = 1;
         my $auth = {
@@ -1131,9 +1223,7 @@ sub removeDelUser {
         if ($mesg->code) {
                 $error=$mesg->error;
                 $code=$mesg->code;
-                printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" uid=$uid code=$code server=$ldapServer port=$ldapPort bind=\"$ldapBindUid\"",$v);
-                closelog();
-                return 0;
+                printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" code=$code server=$ldapServer port=$ldapPort bind=\"$ldapBindUid\"",0);
         }
         $nret = $mesg->count;
 

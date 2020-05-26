@@ -6,25 +6,16 @@
 
 # Config setting#
 
-## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -u <user>\n";
-$usage .= "\t $0 -f <file>\n";
-$usage .= "\t read a file with lines in the form <user> \n\n";
 
-@ARGV or die($usage);
-
-if (($#ARGV != 1) && ($ARGV[0] ne '-h')) {
-        print $usage;
-        exit(255);
-}
+my $desc  = "removes all mailboxes of a user. Provide the following parameters:\n";
 
 use Config::IniFiles;
+use Getopt::Long::Descriptive;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -64,40 +55,55 @@ my @user = undef;
 my $logproc='deluser';
 my $cyrus;
 
-use Switch;
+# Parameter handler
+my ($opt, $usage) = describe_options(
+  '%c %o '.$desc,
+  [ 'h=s', 'the server to connect to', { required => 1} ],
+  [ "mode" =>
+        hidden => {
+                one_of => [
+                        [ 'u=s', 'the username where to delete' ],
+                        [ 'file|f=s', 'read a file with lines in the form <user>' ]
+                ],
+        },
+  ],
+  [],
+  [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+  [],
+);
 
-     for ( $ARGV[0] ) {
-	if (/^-h/)  {
-		print $usage;
-		exit(0);
-	}
-        elsif    (/^-u/)  {
-                if ($#ARGV != 1) { print $usage; die("\nI need  <user>\n"); }
-		$user[0] = "$ARGV[1]";
-		$i=1;
-	}
-        elsif (/^-f(|ile)$/)  {
-                if ($#ARGV != 1) { print $usage; die ("\nI need the file name!\n"); }
-                $data_file=$ARGV[1];
-                open(DAT, $data_file) || die("Could not open $data_file!");
-                @raw_data=<DAT>;
-                close(DAT);
-                foreach $line (@raw_data)
-                {
-                        wchomp($line);
-                        $user[$i]=$line;
-                        $i++;
-                }
-                print "\nFound $i accounts\n";
-         }
-	else { die($usage); }
-   }
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+        or die("\nToo many arguments.\n\n".$usage->text);
 
+if (not defined($opt->mode)) {
+        die("\nInsufficient arguments.\n\n".$usage->text);
+}
+my $cyrus_server = $opt->h;
+if ($opt->mode eq 'u') {
+        if ($opt->u  =~ /\Q$sep/) {
+                die("\nYou must specify a root mailbox in '-u'\n");
+        }
+        $user[0] = $opt->u;
+        $i = 1;
+}
+if ($opt->mode eq 'file') {
+        $data_file = $opt->file;
+        open(DAT, $data_file) || die("Could not open $data_file!");
+        @raw_data=<DAT>;
+        close(DAT);
+        foreach $line (@raw_data) {
+                wchomp($line);
+		$user[$i]=$line;
+                $i++;
+        }
+        print "\nFound $i accounts\n";
+}
+## End of parameter handler
 
-
-  if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
-        exit(255);
-  }
+if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
+	exit(255);
+}
 
 
 for ($c=0;$c<$i;$c++) {

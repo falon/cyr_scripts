@@ -13,7 +13,7 @@
 
 # Config setting#
 
-## Change nothing below, if you are a stupid user! ##
+
 
 require 5.8.8;
 

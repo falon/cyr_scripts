@@ -17,13 +17,19 @@
 
 # Config setting#
 
-## Change nothing below, if you are a stupid user! ##
+
 
 my $usage  = "\nUsage:\t$0\n\n";
 
-if ($#ARGV >= 0) {
-        print $usage;
-        exit;
+if (@ARGV) {
+	if ($#ARGV > 0) {
+		die($usage);
+	}
+	if ($ARGV[0] =~ /^--help/)  {
+		print $usage;
+		exit(0);
+	}
+	else { die($usage); }
 }
 
 use Config::IniFiles;
@@ -31,7 +37,6 @@ my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');

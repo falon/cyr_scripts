@@ -5,7 +5,6 @@ my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -15,19 +14,12 @@ require "/usr/local/cyr_scripts/core.pl";
 # Config setting#
 
 
-## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -mboxold <user_now> -folderold <foldernow> -mboxnew <user_new> -foldernew <foldernew> [-part <part>] [-autopart] [-oldpart]\n";
-$usage .= "\tmove <foldernow> of <user_now> in <foldernew> of <user_new>\n";
-$usage .= "\tinto new partition <part>\n";
-$usage .="\t* or into partition of <mboxnew> domain defined by Partition Manager if -autopart\n";
-$usage .="\t* or into partition of <foldernow> if -oldpart\n";
-$usage .="\t  use either oldpart or autopart, or none. Both are not allowed.\n\n";
-$usage .= "\t $0 -file <file> [-utf7]\n";
-$usage .= "\tread a file with lines in the form <user_now>;<foldernow>;<user_new>;<foldernew>;<part>\n";
-$usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n";
-$usage .= "\t<part> can be the empty or null char if you don't want to specify the partition.\n";
-$usage .= "\tie\n\t\tmbox1;folder1;mbox2;folder2;\n\n";
+my $desc= 'moves <foldernow> of <user_now> in <foldernew> of <user_new> into new partition <part>';
+$desc .= "\n\tor into partition of <mboxnew> domain defined by Partition Manager if --autopart";
+$desc .= "\n\tor into partition of <foldernow> if --oldpart.";
+$desc .= "\n\tUse either oldpart or autopart, or none. Both are not allowed.\n";
+$desc .= "\n\tProvide the following parameter:\n";
 
 my $auth = {
     -mechanism => 'login',
@@ -60,88 +52,104 @@ my $Tw =  $cfg->val('logintest','Tw');
 my $useAccountCheck =  $cfg->val('logintest','active');
 
 
-use Getopt::Long;
+use Getopt::Long::Descriptive;
 use Unicode::IMAPUtf7;
 use Encode;
 my $code=$cfg->val('code','code');
 my $imaputf7 = Unicode::IMAPUtf7->new();
-my $utf7 = 0;
 
-if (! defined($ARGV[0]) ) {
-	        die($usage);
+# Parameter handler
+my ($opt, $usage) = describe_options(
+  '%c %o '.$desc,
+  [ 'h=s', 'the server to connect to', { required => 1} ],
+  [ "mode" =>
+        hidden => {
+                one_of => [
+                        [ 'mboxold=s', 'the mailbox to rename or move' ],
+                        [ 'file|f=s', "read a file with lines in the form <user_now>;<foldernow>;<user_new>;<foldernew>;<part>\n\t\t\t\tThe optional utf7 flag allows to write folders already utf7-imap encoded.\n\t\t\t\t<part> can be the empty or null char if you don't want to change the partition.\n\t\t\t\tie\n\t\t\t\tmbox1;folder1;mbox2;folder2;" ]
+                ],
+        },
+  ],
+  [],
+  [ 'folderold=s', 'current folder name <foldernow> (in combination with --mboxold)' ],
+  [ 'mboxnew=s', 'new root user <user_new> (in combination with --mboxold)' ],
+  [ 'foldernew=s', 'the folder where to move <foldernow> (in combination with --mboxold)' ],
+  [ 'part=s', 'the new partition (in combination with --mboxold)' ],
+  [ 'autopart', 'the new partition is the partition of <mboxnew> domain defined by Partition Manager (in combination with --mboxold)' ],
+  [ 'oldpart', 'the new partition is the current partition of <foldernow> (in combination with --mboxold)' ],
+  [],
+  [ 'utf7', 'this optional flag let you to write folders already utf7-imap encoded (in combination with --file)' ],
+  [],
+  [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+  [],
+);
+
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+        or die("\nToo many arguments.\n\n".$usage->text);
+
+if (not defined($opt->mode)) {
+        die("\nInsufficient arguments.\n\n".$usage->text);
 }
-
-for ( $ARGV[0] ) {
-	if (/^-(-|)mboxold/)  {
-		GetOptions(     'mboxold=s'	=> \$mboxold[0],
-				'folderold:s'	=> \$fdrold,
-				'mboxnew=s'	=> \$mboxnew[0],
-				'foldernew:s'	=> \$fdrnew,
-				'part=s'	=> \$part[0],
-				'autopart'	=> \$autopart,
-				'oldpart'	=> \$oldpart	
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-                if (defined($fdrold)) {
-			if ($fdrold =~ /^\Q$sep/) {
-				die("\nYou must specify a folder path without the initial $sep in '-folderold'.\n$usage");
-			}
-			$folderold[0] = $imaputf7->encode(encode($code,$fdrold));
+my $cyrus_server = $opt->h;
+if ($opt->mode eq 'mboxold') {
+        if ($opt->mboxold  =~ /\Q$sep/) {
+                die("\nYou must specify a root mailbox in '--mboxold'\n");
+        }
+        $mboxold[0] = $opt->mboxold;
+	$fdrold = $opt->folderold;
+	if (defined($fdrold)) {
+		if ($fdrold =~ /^\Q$sep/) {
+			die("\nYou must specify a folder path without the initial $sep in '--folderold'.\n");
 		}
-		else { $folderold[0] = 'INBOX'; }
-		if (defined($fdrnew)) {
-			if ($fdrnew =~ /^$sep/) {
-				die("\nYou must specify a folder path without the initial $sep in '-foldernew'.\n$usage");
-			}
-			$foldernew[0] = $imaputf7->encode(encode($code,$fdrnew));
-		}
-		else { $foldernew[0] = 'INBOX'; }
-		defined($mboxnew[0])
-			or die("\nParameter mboxnew required.\n$usage");
-		defined($part[0])
-			or $part[0]='';
-		$i=1;
+		$folderold[0] = $imaputf7->encode(encode($code,$fdrold));
 	}
-        elsif (/^-(-|)h(|elp)$/) {
-		print $usage;
-		exit(0);
-}
-	elsif (/^-(-|)file/)  {
-		GetOptions(     'file=s'   => \$data_file,
-				'utf7'   => \$utf7
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-		defined($data_file)
-			or die("\nfile required.\n$usage");
-		open(DAT, $data_file) || die("Could not open $data_file!");
-		@raw_data=<DAT>;
-		close(DAT);
-		foreach $line (@raw_data)
-		{
-			wchomp($line);
-			@PARAM=split(/\;/,$line,5);
-			if ($#PARAM != 4) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
-			else {
-				($mboxold[$i],$fdrold,$mboxnew[$i],$fdrnew,$part[$i])=@PARAM;
-				 $part[$i]=~ s/\s+$//;  # Remove trailing spaces
-				 if ($utf7 == 0) {
-				 	$folderold[$i] = $imaputf7->encode(encode($code,$fdrold));
-				 	$foldernew[$i] = $imaputf7->encode(encode($code,$fdrnew));
-				}
-				else {
-					$folderold[$i] = $fdrold;
-					$foldernew[$i] = $fdrnew;
-				}
-			 }
-			 $i++;
+	else { $folderold[0] = 'INBOX'; }
+	$fdrnew = $opt->foldernew;
+	if (defined($fdrnew)) {
+		if ($fdrnew =~ /^$sep/) {
+			die("\nYou must specify a folder path without the initial $sep in '--foldernew'.\n");
 		}
-		print "\nFound $i mailboxes\n";
+		$foldernew[0] = $imaputf7->encode(encode($code,$fdrnew));
 	}
-	else { die($usage); }
+	else { $foldernew[0] = 'INBOX'; }
+	$mboxnew[0] = $opt->mboxnew;
+	defined($mboxnew[0])
+			or die("\nParameter --mboxnew required.\n");
+        $part[0] = $opt->part;
+        defined($part[0])
+                or $part[0]='';
+	if ( defined($opt->utf7) ) {
+		print "\nParameter --utf7 ignored.\n";
+	}
+        $i = 1;
 }
-
+if ($opt->mode eq 'file') {
+        $data_file = $opt->file;
+        open(DAT, $data_file) || die("Could not open $data_file!");
+        @raw_data=<DAT>;
+        close(DAT);
+        foreach $line (@raw_data) {
+                wchomp($line);
+                @PARAM=split(/\;/,$line,5);
+                if ($#PARAM != 4) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
+                else {
+                        ($mboxold[$i],$fdrold,$mboxnew[$i],$fdrnew,$part[$i])=@PARAM;
+                        $part[$i]=~ s/\s+$//;  # Remove trailing spaces
+                        if (not defined $opt->utf7) {
+                                $folderold[$i] = $imaputf7->encode(encode($code,$fdrold));
+                                $foldernew[$i] = $imaputf7->encode(encode($code,$fdrnew));
+                        }
+                        else {
+                                $folderold[$i] = $fdrold;
+				$foldernew[$i] = $fdrnew;
+                        }
+                }
+                $i++;
+        }
+        print "\nFound $i mailboxes\n";
+}
+## End of parameter handler
 
 #
 # assuming all necessary variables have been declared and filled accordingly:

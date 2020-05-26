@@ -7,36 +7,53 @@
 
 # Config setting#
 
-## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 [-u <user>][-d <fqdn>][[-q \% quota th (omit \%)]]\n";
-$usage .= "\n\n";
+my $desc = "shows <user> details, or all user details by domain. Filter on quota or partition could be set.\n\tProvide the following parameters:\n";
 
 my @user = undef;
-my $thq = undef;
 my $i = 1;
 my $c = 0;
 
-use Getopt::Std;
-my %opt=();
-getopts("hu:d:q:p:", \%opt) or die ($usage);
+use Getopt::Long::Descriptive;
 
-if ($opt{h}) { die ($usage); } 
-if ($opt{u}) { 
-                $user[0]=$opt{u};
-         }
-if ($opt{d}) {
-                $user[0]='%@'.$opt{d};
-         }
-if ($opt{q}) {
-		if ($opt{q} !~ /^\d+$/) { die ("\n\nPlease, check quota threshold syntax, Remember to omit \%!\n\n") };
-                $thq = $opt{q};
-         }
-if ($opt{p}) {
-		$thispart = $opt{p};
-         }
+# Parameter handler
+my ($opt, $usage) = describe_options(
+   '%c %o '.$desc,
+   [ 'h=s', 'the server to connect to', { required => 1} ],
+   [ "mode" =>
+        hidden => {
+                one_of => [
+                        [ 'u=s', 'list this specific account' ],
+                        [ 'd=s', 'list all accounts of a domain' ]
+                ],
+        },
+   ],
+   [],
+   [ 'q=i', 'the quota threshold in MiB' ],
+   [ 'p=s', 'filter on partition name' ],
+   [],
+   [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+   [],
+);
 
-if (not defined ($user[0])) { die ($usage); }
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+        or die("\nToo many arguments.\n\n".$usage->text);
+
+if (not defined($opt->mode)) {
+        die("\nInsufficient arguments.\n\n".$usage->text);
+}
+my $cyrus_server = $opt->h;
+if ($opt->mode eq 'u') {
+	$user[0]=$opt->u;
+}
+if ($opt->mode eq 'd') {
+	$user[0]='%@'.$opt->d;
+}
+if ($opt->p) {
+	$thispart = $opt->p;
+}
+
 
 
 use Cyrus::IMAP::Admin;
@@ -55,7 +72,6 @@ my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -92,7 +108,7 @@ printf "\n\n\e[33m" . '%-30.30s  %-9s %-9s %-8s %-27s %-27s %-12s %-3s' . "\e[39
 	'Partition',
 	'Expire';
 
-my $cVer = cyrusVersion($client);
+#my $cVer = cyrusVersion($client);
 
 for ($c=0;$c<$i;$c++) {
 		@mailboxes=$client->listmailbox('user'.$sep.$user[$c]);
@@ -101,16 +117,16 @@ for ($c=0;$c<$i;$c++) {
 			for ($j=0;$j<$#info;$j+=2) {
 				$anno_var{$info[$j]} = $info[$j+1];
 			}
-			if ( $cVer =~ /^3/ ) {
+			#if ( $cVer =~ /^3/ ) {
 				%anno = %{$anno_var{$mailboxes[$m][0]}{'shared'}};
 				$anno_prefix = '/mailbox//vendor/cmu/cyrus-imapd';
-			}
-			if ( $cVer =~ /^(v|)2/ ) {
-				%anno = %anno_var;
-				$anno_prefix = '/mailbox/{'.$mailboxes[$m][0].'}/vendor/cmu/cyrus-imapd';
-			}
+			#}
+			#if ( $cVer =~ /^(v|)2/ ) {
+			#	%anno = %anno_var;
+			#	$anno_prefix = '/mailbox/{'.$mailboxes[$m][0].'}/vendor/cmu/cyrus-imapd';
+			#}
 			#use Data::Dump qw(dump);
-			#dump (\@info);
+			#dump (\%anno);
 			if ((defined $thispart) and ( $anno{$anno_prefix.'/partition'} !~ /^$thispart$/)) {next;}
 			$nmbox++;
 			($root,%quota) = $client->quotaroot($mailboxes[$m][0]);
@@ -126,7 +142,7 @@ for ($c=0;$c<$i;$c++) {
 				$perc = 0;
 			}
 			else {$perc = ceil(100*$quota{'STORAGE'}[0]/$quota{'STORAGE'}[1]);}
-			if ((!(defined $thq)) or ($perc > $thq)) {
+			if ((!(defined $opt->q)) or ($perc > $opt->q)) {
 				printf '%-30.30s  %-9u %-9s %-7u  ',$root,$quota{'STORAGE'}[0],$quota{'STORAGE'}[1],$perc;
 				$anno{$anno_prefix.'/lastupdate'} =~ /^\s*\S+/ ?
 					printf '%-27s ',$anno{$anno_prefix.'/lastupdate'} : print '--------------------------  ';

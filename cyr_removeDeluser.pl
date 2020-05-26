@@ -3,7 +3,6 @@
 # This will remove all mailboxes with LDAP mailUserStatus=deleted and change this to
 # removed. Just be 
 # sure that you installed the Cyrus::IMAP perl module.  If you did 
-# 'make all && make install' or installed Cyrus using the FreeBSD ports you
 # don't have to do anything at all.
 #
 # Change the params below to match your mailserver settins, and
@@ -15,29 +14,18 @@
 # Usage:
 #  filename itself. Crontab or systemd timer suggested!
 
-
-
-## Change nothing below, if you are a stupid user! ##
-
 my $logproc = 'removedeluser';
-my $usage  = "\nUsage:\t$0 [-d domain] [-g day of grace]\n\n";
-
-if ($#ARGV >= 4) {
-        print $usage;
-        exit;
-}
-
-if (($#ARGV == 0)||($#ARGV == 2)) { print $usage; die("Specify all parameters you want!\n"); }
+my $desc = "permanently remove mailboxes flagged as 'deleted' over LDAP. Provide the following parameters:\n";
 
 #
 # CONFIGURATION PARAMS
 #
+use Getopt::Long::Descriptive;
 use Config::IniFiles;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -52,7 +40,7 @@ my $ldapBindPwd = $cfg->val('ldap','pass');
 # grace =
 # then $cfg->val('orphan','grace') become a null array!
 if ( ref($cfg->val('orphan','grace')) eq 'ARRAY') {
-	die("$usage\tThe grace parameter is wrong. Check it!\n");
+	die("The default grace parameter in your config file is wrong. Check it!\n");
 }
 my $grace = $cfg->val('orphan','grace');
 my $verbose = 1;
@@ -61,35 +49,24 @@ my $verbose = 1;
 # EOC
 #
 
-if ($#ARGV >= 1) {
-     for ( $ARGV[0] ) {
-        if    (/^-d/)  {
-		$ldapBase = "o=$ARGV[1],ou=People,".$ldapBase;
-	}
-	
-	elsif (/^-g/) {
-                $grace = $ARGV[1];	
-        }
-	else           { print $usage; die("Make sense in what you write, stupid user!\n"); }     # default
-     }
+# Parameter handler
+my ($opt, $usage) = describe_options(
+	'%c %o '.$desc,
+	[ 'd=s', 'the domain where to run', { required => 1} ],
+	[ 'g=i', 'optional grace days other than default' ],
+	[],
+	[ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+	[],
+);
+
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+	or die("\nToo many arguments.\n\n".$usage->text);
+my $domain = $opt->d;
+if ( defined($opt->g) ) {
+	$grace = $opt->g;
 }
-
-if ($#ARGV >= 3) {
-     for ( $ARGV[2] ) {
-        if    (/^-d/)  {
-                if ($ARGV[0] ne '-d') {$ldapBase = "o=$ARGV[3],ou=People,".$ldapBase;}
-		else {die ("$usage\nDon't specify -d twice!\n");}
-        }
-
-        elsif (/^-g/) {
-                if ($ARGV[0] ne '-g') {$grace = $ARGV[3];}
-		else {die ($usage."Don't specify -g twice!\n");}
-        }
-        else           { print $usage; die("Make sense in what you write, stupid user!\n"); }     # default
-     }
-}
-
-
+$ldapBase = "o=$domain,ou=People,".$ldapBase;
 
 require "/usr/local/cyr_scripts/core.pl";
 
@@ -98,7 +75,7 @@ require "/usr/local/cyr_scripts/core.pl";
 #####			MAIN			######
 ######################################################
 
-my $ok = removeDelUser ( $logproc, $ldapHost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_server,$cyrus_user,$cyrus_pass,$grace, $sep, $verbose );
+my $ok = removeDelUser ( $logproc, $ldapHost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$cyrus_user,$cyrus_pass,$grace, $sep, $verbose );
 if (!$ok) {
 	print "\n\n\e[33mSome errors occur. Please, see urgently the logs.\e[39m\n\n";
 	exit(255);

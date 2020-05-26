@@ -2,31 +2,23 @@
 #
 #
 # Usage:
-#  <path> <anno> <value type> <value>
+#  -h <imap server> --path <path> --anno <anno> --type <value type> --value <value>
 # 		set annotation <anno>
 #               for path <path> with <value> into <value type>
 
 
 # Config setting#
 
-## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 <path> <anno> <value type> <value>\n";
 
-if (! defined($ARGV[0]) ) {
-	die($usage);
-}
-if ($#ARGV != 3) {
-        print $usage;
-        exit(255);
-}
+my $desc = "set a generic metadata. Provide the following parameters:\n";
 
 use Config::IniFiles;
+use Getopt::Long::Descriptive;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -59,15 +51,31 @@ my $value_type = undef;
 my $value = undef;
 my $IMAP;
 
-use Switch;
+# Parameter handler
+my ($opt, $usage) = describe_options(
+   '%c %o '.$desc,
+   [ 'h=s', 'the server to connect to', { required => 1} ],
+   [ 'path=s', 'the metadata path', ],
+   [ 'anno=s', 'the metadata name', { required => 1} ],
+   [ 'type=s', 'the metadata type (private/shared)', { required => 1} ],
+   [ 'value=s', 'the metadata value', { required => 1} ],
+   [],
+   [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+   [],
+);
 
-if ($#ARGV != 3) {
-	die ($usage);
-}
-		$path = "$ARGV[0]";
-		$anno = "$ARGV[1]";
-		$valuetype = "$ARGV[2]";
-		$value = "$ARGV[3]";
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+         or die("\nToo many arguments.\n\n".$usage->text);
+
+
+$cyrus_server = $opt->h;
+$path = $opt->path;
+defined ($path)
+	or $path = '';
+$anno = $opt->anno;
+$valuetype = $opt->type;
+$value = $opt->value;
 
 
 use Sys::Syslog;
@@ -86,8 +94,15 @@ if ( !$IMAP ) {
 }
 else {
 	printLog('LOG_DEBUG',"action=cyrusconnect status=success server=$cyrus_server mailHost=$cyrus_server user=". $cyrus_user .' authz='.$cyrus_user . $rdlog, $verbose);
-	setAnnotationServer($logproc, $IMAP, $path, $anno, $valuetype, $value, TRUE, $verbose)
-		or $exit = 1;
+        my $cVer = cyrusVersion_byIMAPTalk($IMAP);
+	if ( $cVer =~ /^3/ ) {
+		setMetadataServer($logproc, $IMAP, $path, $anno, $valuetype, $value, TRUE, $verbose)
+			or $exit = 1;
+	}
+	else {
+		setAnnotationServer($logproc, $IMAP, $path, $anno, $valuetype, $value, TRUE, $verbose)
+			or $exit = 1;
+	}
 	$IMAP->close();
 }
 exit($exit);

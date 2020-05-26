@@ -1,11 +1,11 @@
 #!/usr/bin/perl  
 
 # Usage:
-#  -u <user> <destServer> [part]           transfer <user> in <destServer> 
-#					   into new partition <part>. User will be removed from
-#					   origin server.
-#  -f <file>				   use a file in the form <user> <destServer> [<part>]
-#  -d <domain> <destServer> [part]	   Prepare a file xfer_<domain> for you! No change to systems.
+#  -h <imap server> -u <user> <destServer> [part]	transfer <user> in <destServer> 
+#							into new partition <part>. User will be removed from
+#							origin server.
+#  -h <imap server> -f <file>		use a file in the form <user> <destServer> [<part>]
+#  -d <domain> <destServer> [part]	Prepare a file xfer_<domain> for you! No change to systems.
 #
 # Prerequisite: admin uid and password for the two imap servers are the same.
 #
@@ -15,7 +15,6 @@ my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -28,7 +27,7 @@ my $ldapBindPwd = $cfg->val('ldap','pass');
 my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 use URI;
-use Getopt::Long;
+use Getopt::Long::Descriptive;
 
 # Config setting#
 
@@ -45,16 +44,8 @@ my $url = URI->new( $cfg->val('xfer','url') );
 
 
 
-
-## Change nothing below, if you are a stupid user! ##
-
-my $usage  = "\nUsage:\t$0 -user <user> -dest <destServer> [-part part]\n";
-$usage .= "\ttransfer <user> in <destServer>\n";
-$usage .= "\tinto new partition <part>. User will be removed from origin server.\n\n";
-$usage .= "\t $0 -file <file>\n";
-$usage .= "\tread a file with lines in the form <user>;<destServer>[;<part>]\n\n";
-$usage .= "\t $0 -d <domain> -dest <destServer> [-part part]\n";
-$usage .= "\tprepare a file named xfer_<domain> with lines in the form <user>;<destServer>;[<part>] for you. No changes applied.\n\n";
+my $desc = "transfer with XFER <user> to <destServer> into new optional partition <part>.\n";
+$desc .= "\tProvide the following parameters:\n";
 
 my @old = undef;
 my @new = undef;
@@ -64,80 +55,88 @@ my $i = 0;
 my $c = 0;
 my $mainproc = 'CyrXfer';
 
+my ($opt, $usage) = describe_options(
+  '%c %o '.$desc,
+  [ 'h=s', 'the server to connect to' ],
+  [ "mode" =>
+        hidden => {
+                one_of => [
+                        [ 'user=s', 'the root mailbox to transfer' ],
+                        [ 'file|f=s', 'read a file with lines in the form  <user>;<destServer>[;<part>]' ],
+			[ 'd=s', 'prepare a file named xfer_<domain> with lines in the form <user>;<destServer>;[<part>] for you. No changes applied.' ],
+                ],
+        },
+  ],
+  [],
+  [ 'dest=s', 'the destination server (in combination with --user or -d)' ],
+  [ 'part=s', 'the destination partition (in combination with --user or -d)' ],
+  [],
+  [],
+  [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+  [],
+);
 
-if (! defined($ARGV[0]) ) {
-	die($usage);
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+        or die("\nToo many arguments.\n\n".$usage->text);
+
+if (not defined($opt->mode)) {
+        die("\nInsufficient arguments.\n\n".$usage->text);
+}
+if ($opt->mode eq 'user') {
+	defined($opt->h)
+		or die("\nParameter -h required.\n");
+	my $cyrus_server = $opt->h;
+        if ($opt->u  =~ /\Q$sep/) {
+                die("\nYou must specify a root mailbox in '--user'.\n");
+        }
+        $user[0] = $opt->user;
+        if ( defined($opt->dest) ) {
+                $destServer[0] = $opt->dest;
+        }
+        else { die("\nParameter --dest required.\n"); }
+	defined($opt->part)
+		or $part[0]='';
+        $i=1;
 }
 
-for ( $ARGV[0] ) {
-	 if    (/^-(-|)user/)  {
-		GetOptions(
-			'user=s'	=> \$user[0],
-			'dest=s'	=> \$destServer[0],
-			'part=s'	=> \$part[0]
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-		defined($destServer[0])
-			or die("\nParameter -dest required.\n$usage");
-		if (defined($user[0])) {
-			if ($user[0] =~ /\Q$sep/) {
-				die("\nYou must specify a root mailbox in '-user'.\n$usage");
-			}
-		}
-		defined($part[0])
-			or $part[0]='';
-		$i=1;
-	 }
-     
-	 elsif (/^-(-|)file/)  {
-		GetOptions(
-			'file=s'   => \$data_file
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-		defined($data_file)
-			or die("\nfile required.\n$usage");
-		open(DAT, $data_file) || die("Could not open $data_file!");
-		@raw_data=<DAT>;
-		close(DAT);
-		foreach $line (@raw_data)
-		{
-			wchomp($line);
-			@PARAM=split(/\;/,$line,3);
-			if (($#PARAM <1) || ($#PARAM >2)) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
-			else { if ($#PARAM == 2) {
-				($user[$i],$destServer[$i],$part[$i])=@PARAM; }
-				else {($user[$i],$destServer[$i])=@PARAM; $part[$i]=''; }
-			}
-			$i++;
-		}
-		print "\nFound $i accounts\n";  
-	 }
-
-	 elsif    (/^-(-|)d/)  {
-		my $partition = undef;
-		GetOptions(
-			'd=s'	=> \$domain,
-			'dest=s'=> \$destServer,
-			'part=s'=> \$partition
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-		defined($destServer)
-			or die("\n-dest required.\n$usage");
-		defined($partition)
-			or $partition='';
-		prepareXferDomain($mainproc,$ldaphost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$domain,$origServer,$destServer,$partition,$v);
-		print "\n\nThe file xfer_$domain has created for your convenience. No changes made to systems.\n\n";
+if ($opt->mode eq 'd') {
+	defined($opt->dest)
+		or die("\nParameter --dest required.\n");
+	if ( defined($opt->part) ){
+		$partition = $opt->part;
+	}
+	else {
+		$partition = '';
+	}
+	if ( prepareXferDomain($mainproc,$ldaphost,$ldapPort,$ldapBase,$ldapBindUid,$ldapBindPwd,$opt->d,$origServer,$opt->dest,$partition,$v) == 0 ) {
+		print "\n\nThe file xfer_" . $opt->d . " has created for your convenience. No changes made to systems.\n\n";
 		exit (0);
-	 }
-     
+	}
+	else {
+		exit(255);
+	}
+}
 
-	 else           { print $usage; die("Make sense in what you write, stupid user!\n"); }     # default
-     }
-
-
+if ($opt->mode eq 'file') {
+        $data_file = $opt->file;
+        open(DAT, $data_file) || die("Could not open $data_file!");
+        @raw_data=<DAT>;
+        close(DAT);
+        foreach $line (@raw_data) {
+                wchomp($line);
+                @PARAM=split(/\;/,$line,3);
+                if (($#PARAM <1) || ($#PARAM >2)) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
+                else {  if ($#PARAM == 2) {
+				($user[$i],$destServer[$i],$part[$i])=@PARAM;
+			}
+			else {($user[$i],$destServer[$i])=@PARAM; $part[$i]=''; }
+                $i++;
+        	}
+	}	
+        print "\nFound $i accounts\n";
+}
+## End of parameter handler
 
 #
 # assuming all necessary variables have been declared and filled accordingly:

@@ -9,23 +9,14 @@
 
 # Config setting#
 
-## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -user <user> -folder <folder> -anno <anno> -value <value>\n";
-$usage .= "\t $0 -file <file> [-utf7]\n";
-$usage .= "\t read a file with lines in the form <user>;<folder>;<anno>;<value>\n";
-$usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n\n";
-
-if (! defined($ARGV[0]) ) {
-	die($usage);
-}
+my $desc = "writes metadata <anno> with value <value> on <folder> of <user>.\n";
 
 use Config::IniFiles;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -62,7 +53,7 @@ my $auth = {
 #####			MAIN			######
 ######################################################
 
-use Getopt::Long;
+use Getopt::Long::Descriptive;
 use Unicode::IMAPUtf7;
 use Encode;
 my $imaputf7 = Unicode::IMAPUtf7->new();
@@ -77,58 +68,82 @@ my $data_file = undef;
 my $cyrus;
 my $exit = 0;
 
-     for ( $ARGV[0] ) {
-         if    (/^-u/)  {
-		GetOptions(     'user=s'	=> \$newuser[0],
-				'folder:s'	=> \$fdr,
-				'anno=s'	=> \$anno[0],
-				'value=s'	=> \$value[0]
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-		if (defined($fdr)) {
-			if ($fdr =~ /^\Q$sep/) {
-				die("\nYou must specify a folder path without the initial $sep in '-folderold'.\n$usage");
-			}
-			$folder[0] = $imaputf7->encode(encode($code,$fdr));
+# Parameter handler
+my ($opt, $usage) = describe_options(
+  '%c %o '.$desc,
+  [ 'h=s', 'the server to connect to', { required => 1} ],
+  [ "mode" =>
+        hidden => {
+                one_of => [
+                        [ 'user=s', 'the root mailbox name' ],
+                        [ 'file|f=s', "read a file with lines in the form <user>;<folder>;<anno>;<value>\n\t\t\t\tThe optional utf7 flag allows to write folders already utf7-imap encoded." ]
+                ],
+        },
+  ],
+  [],
+  [ 'folder=s', 'the folder name (in combination with --user)' ],
+  [ 'anno=s', 'the metadata name (in combination with --user)' ],
+  [ 'value=s', 'the metadata value (in combination with --user)' ],
+  [],
+  [ 'utf7', 'this optional flag let you to write folders already utf7-imap encoded (in combination with --file)' ],
+  [],
+  [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+  [],
+);
+
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+        or die("\nToo many arguments.\n\n".$usage->text);
+
+if (not defined($opt->mode)) {
+        die("\nInsufficient arguments.\n\n".$usage->text);
+}
+my $cyrus_server = $opt->h;
+if ($opt->mode eq 'user') {
+        if ($opt->user  =~ /\Q$sep/) {
+                die("\nYou must specify a root mailbox in '--user'\n");
+        }
+        $newuser[0] = $opt->user;
+	if ( defined($opt->folder) ) {
+		if ($opt->folder =~ /^\Q$sep/) {
+			 die("\nYou must specify a folder path without the initial $sep in '--folder'.\n");
 		}
-		else { $folder[0] = 'INBOX'; }
-		$i=1;
+        	$folder[0] = $imaputf7->encode(encode($code,$opt->folder));
 	}
-	elsif (/^-(-|)h(|elp)$/) {
-		print $usage;
-		exit(0);
+	else { $folder[0] = 'INBOX'; }
+	if ( defined($opt->anno) ) {
+		$anno[0] = $opt->anno;
 	}
-        elsif (/^-(-|)file/)  {
-		GetOptions(     'file=s'   => \$data_file,
-				'utf7'   => \$utf7
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-		defined($data_file)
-			or die("\nfile required.\n$usage");
-                open(DAT, $data_file) || die("Could not open $data_file!");
-                @raw_data=<DAT>;
-                close(DAT);
-                foreach $line (@raw_data)
-                {
-                        wchomp($line);
-                        @PARAM=split(/\;/,$line,4);
-                        if ($#PARAM != 3) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
-                        else {
-                                ($newuser[$i],$fdr,$anno[$i],$value[$i])=@PARAM;
+	else { die("\n--anno required.\n"); }
+        if ( defined($opt->value) ) {
+		$value[0] = $opt->value;
+	}
+	else { die("\n--value required.\n"); }
+        $i = 1;
+}
+if ($opt->mode eq 'file') {
+        $data_file = $opt->file;
+        open(DAT, $data_file) || die("Could not open $data_file!");
+        @raw_data=<DAT>;
+        close(DAT);
+        foreach $line (@raw_data) {
+                wchomp($line);
+                @PARAM=split(/\;/,$line,4);
+                if ($#PARAM != 3) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
+                else {
+                        ($newuser[$i],$fdr,$anno[$i],$value[$i])=@PARAM;
+                        if (not defined $opt->utf7) {
+                                $folder[$i] = $imaputf7->encode(encode($code,$fdr));
                         }
-			if ($utf7 == 0) {
-				$folder[$i] = $imaputf7->encode(encode($code,$fdr));
-			} else {
-				$folder[$i] = $fdr;
-			}
-                        $i++;
+                        else {
+                                $folder[$i] = $fdr;
+                        }
                 }
-                print "\nFound $i accounts\n";
-         }
-	else { die($usage); }
-   }
+                $i++;
+        }
+        print "\nFound $i mailboxes\n";
+}
+## End of parameter handler
 
 
 if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {

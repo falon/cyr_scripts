@@ -3,20 +3,17 @@
 # This will set right on mailbox for specific user.
 #
 
-## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -u <mailbox> -folder <folder> -uid <user> -right <right>\n";
-$usage .= "\t $0 -file <file> [-utf7]\n";
-$usage .= "\t read a file with lines in the form <mailbox>;<folder>;<user>;<right>.\n";
-$usage .= "\tthe optional utf7 flag let you to write folders already utf7-imap encoded.\n";
-$usage .= "If <folder> = '*' then we set ACL on INBOX and all mailbox subfolders.\n\n";
+my $desc = "writes ACL <right> for user <user> in <folder> of <mailbox>.";
+$desc .= "\n\tIf <folder> = '*' then we set ACL on INBOX and all mailbox subfolders.";
+$desc .= "\n\t<folder> defaults to INBOX, if not set.";
+$desc .= "\n\tProvide following parameters:\n";
 
 use Config::IniFiles;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -24,7 +21,7 @@ my $sep = $cfg->val('imap','sep');
 my $exit = 0;
 require "/usr/local/cyr_scripts/core.pl";
 use Cyrus::IMAP::Admin;
-use Getopt::Long;
+use Getopt::Long::Descriptive;
 use Unicode::IMAPUtf7;
 use Encode;
 
@@ -66,70 +63,79 @@ my $cyrus;
 
 my $code= $cfg->val('code','code');
 my $imaputf7 = Unicode::IMAPUtf7->new();
-my $utf7 = 0;
 
-if (! defined($ARGV[0]) ) {
-        die($usage);
+my ($opt, $usage) = describe_options(
+  '%c %o '.$desc,
+  [ 'h=s', 'the server to connect to', { required => 1} ],
+  [ "mode" =>
+        hidden => {
+                one_of => [
+                        [ 'u=s', 'the root mailbox where to define the ACL' ],
+                        [ 'file|f=s', 'read a file with lines in the form <mailbox>;<folder>;<user>;<right>' ]
+                ],
+        },
+  ],
+  [],
+  [ 'folder=s', 'the folder where to define the ACL (in combination with -u)' ],
+  [ 'uid=s', 'the username receiving the ACL (in combination with -u)' ],
+  [ 'right=s', 'the righit as expected by RFC4314 or by Cyrus IMAP ACL macros (in combination with -u)' ],
+  [],
+  [ 'utf7', 'this optional flag let you to write folders utf7-imap encoded (in combination with --file)' ],
+  [],
+  [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+  [],
+);
+
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+        or die("\nToo many arguments.\n\n".$usage->text);
+
+if (not defined($opt->mode)) {
+        die("\nInsufficient arguments.\n\n".$usage->text);
 }
-     for ( $ARGV[0] ) {
-         if (/^-(-|)u/)  {
-		GetOptions(     'u=s'   => \$mailbox[0],
-                                'folder:s' => \$fdr,
-                                'uid=s' => \$who[0],
-				'right=s' => \$right[0]
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-                if (defined($mailbox[0])) {
-	                if ($mailbox[0] =~ /\Q$sep/) {
-                        	die("\nYou must specify a root mailbox in '-u'.\n$usage");
-			}
-		}
-		if (defined($fdr)) {
-			$folder[0] = $imaputf7->encode(encode($code,$fdr));
-                }
-                else { $folder[0] = 'INBOX'; }
-		defined($who[0])
-			or die("\nuid required.\n$usage");
-		defined($right[0])
-			or die("\nright required.\n$usage");
-		$i=1;
+my $cyrus_server = $opt->h;
+if ($opt->mode eq 'u') {
+	if ($opt->u  =~ /\Q$sep/) {
+		die("\nYou must specify a root mailbox in '-u'\n");
 	}
-	elsif (/^-(-|)h(|elp)$/) {
-		print $usage;
-		exit(0);
+	$mailbox[0] = $opt->u;
+	if ( defined($opt->folder) ) {
+		$folder[0] = $imaputf7->encode(encode($code,$opt->folder));
 	}
-        elsif (/^-(-|)file/)  {
-                GetOptions(     'file=s'   => \$data_file,
-				'utf7'   => \$utf7
-                ) or die($usage);
-                @ARGV == 0
-                        or die("\nToo many arguments.\n$usage");
-                defined($data_file)
-                        or die("\nfile required.\n$usage");
-                open(DAT, $data_file) || die("Could not open $data_file!");
-                @raw_data=<DAT>;
-                close(DAT);
-                foreach $line (@raw_data)
-                {
-                        wchomp($line);
-                        @PARAM=split(/\;/,$line,4);
-                        if ($#PARAM != 3) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
-                        else {
-                                ($mailbox[$i],$fdr,$who[$i],$right[$i])=@PARAM;
-				$right[$i]=~ s/\s+$//;  # Remove trailing spaces
-				if ($utf7 == 0) {
-					$folder[$i] = $imaputf7->encode(encode($code,$fdr));
-				} else {
-					$folder[$i] = $fdr;
-				}
+	else { $folder[0] = 'INBOX'; }
+	defined($opt->uid)
+		or die("\nuid required.\n");
+	$who[0] = $opt->uid;
+	defined($opt->right)
+		or die("\nright required.\n");
+	$right[0] = $opt->right;
+	$i=1;
+}
+
+if ($opt->mode eq 'file') {
+        $data_file = $opt->file;
+        open(DAT, $data_file) || die("Could not open $data_file!");
+        @raw_data=<DAT>;
+        close(DAT);
+        foreach $line (@raw_data) {
+                wchomp($line);
+                @PARAM=split(/\;/,$line,4);
+                if ($#PARAM != 3) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
+                else {
+                        ($mailbox[$i],$fdr,$who[$i],$right[$i])=@PARAM;
+                        $right[$i]=~ s/\s+$//;  # Remove trailing spaces
+                        if (not defined $opt->utf7) {
+                                $folder[$i] = $imaputf7->encode(encode($code,$fdr));
                         }
-                        $i++;
+                        else {
+                                $folder[$i] = $fdr;
+                        }
                 }
-                print "\nFound $i folders\n";
+                $i++;
         }
-	else { die($usage); }
-   }
+        print "\nFound $i folders\n";
+}
+## End of parameter handler
 
 
 if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $v)) == 0) {

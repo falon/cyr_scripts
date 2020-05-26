@@ -20,24 +20,16 @@
 
 # Config setting#
 
-## Change nothing below, if you are a stupid user! ##
 
-my $usage  = "\nUsage:\t$0 -u <user> -p <partition> -q <quota> -spamexp <spamexp> -trashexp <trashexp>\n";
-$usage .= "\t $0 -file <file>\n";
-$usage .= "\t read a file with lines in the form <user>;<partition>;<quota>;<spamexp>;<trashexp>.\n";
-$usage .= "Please, add the LDAP entry before.\n\n";
 
-if (! defined($ARGV[0]) ) {
-	die($usage);
-}
+my $desc  = "\nCreate new mailbox account with system folders and specialuse if supported. Provide the following parameters:\n";
 
 use Config::IniFiles;
-use Getopt::Long;
+use Getopt::Long::Descriptive;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
@@ -79,52 +71,65 @@ my $logproc='adduser';
 my $exit = 0;
 my $cyrus;
 
-for ( $ARGV[0] ) {
-	if (/^-(-|)u/)  {
-		GetOptions(     'u=s'	=> \$newuser[0],
-				'p=s'	=> \$partition[0],
-				'q=s'	=> \$quota_size[0],
-				'spamexp=s'	=> \$expSpam[0],
-				'trashexp=s'	=> \$expTrash[0]
-		) or die ($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
+# Parameter handler
+my ($opt, $usage) = describe_options(
+  '%c %o '.$desc,
+  [ 'h=s', 'the server to connect to', { required => 1} ],
+  [ "mode" =>
+        hidden => {
+                one_of => [
+                        [ 'u=s', 'the username' ],
+                        [ 'file|f=s', 'read a file with lines in the form <user>;<partition>;<quota>;<spamexp>;<trashexp>' ]
+                ],
+        },
+  ],
+  [],
+  [ 'p=s', 'partition name (in combination with -u)' ],
+  [ 'q=s', 'quota root (in combination with -u)'],
+  [ 'spamexp=s', 'Spam folder expiration in days (in combination with -u)'],
+  [ 'trashexp=s', 'Trash folder expiration in days (in combination with -u)'],
+  [],
+  [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+  [],
+);
 
-		if ($newuser[0] =~ /\Q$sep/) {
-			die("\nYou must specify a root mailbox in '-u'.\n$usage");
-		}
-		$i=1;
-	}
-	elsif (/^-(-|)file/)  {
-		GetOptions(     'file=s'   => \$data_file,
-		) or die($usage);
-		@ARGV == 0
-			or die("\nToo many arguments.\n$usage");
-		defined($data_file)
-			or die("\nfile required.\n$usage");
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+        or die("\nToo many arguments.\n\n".$usage->text);
 
-	        open(DAT, $data_file) || die("Could not open $data_file!");
-        	@raw_data=<DAT>;
-        	close(DAT);
-        	foreach $line (@raw_data)
-        	{
-                        wchomp($line);
-                        @PARAM=split(/\;/,$line,5);
-                        if ($#PARAM != 4) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
-                        else {
-                                ($newuser[$i],$partition[$i],$quota_size[$i],$expSpam[$i],$expTrash[$i])=@PARAM;
-				$expTrash[$i]=~ s/\s+$//;  # Remove trailing spaces
-                        }
-                        $i++;
-         	}
-         	print "\nFound $i accounts\n";
-	}
-	elsif (/^-(-|)h(elp|)$/) {
-		print $usage;
-		exit 0;
-	}
-	else { die($usage); }
+if (not defined($opt->mode)) {
+        die("\nInsufficient arguments.\n\n".$usage->text);
 }
+my $cyrus_server = $opt->h;
+if ($opt->mode eq 'u') {
+        if ($opt->u  =~ /\Q$sep/) {
+                die("\nYou must specify a root mailbox in '-u'\n");
+        }
+        $newuser[0] = $opt->u;
+        $partition[0] = $opt->p;
+        $quota_size[0] = $opt->q;
+	$expSpam[0] = $opt->spamexp;
+	$expTrash[0] = $opt->trashexp;
+        $i = 1;
+}
+if ($opt->mode eq 'file') {
+        $data_file = $opt->file;
+        open(DAT, $data_file) || die("Could not open $data_file!");
+        @raw_data=<DAT>;
+        close(DAT);
+        foreach $line (@raw_data) {
+                wchomp($line);
+                @PARAM=split(/\;/,$line,5);
+                if ($#PARAM != 4) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
+                else {
+                        ($newuser[$i],$partition[$i],$quota_size[$i],$expSpam[$i],$expTrash[$i])=@PARAM;
+			$expTrash[$i]=~ s/\s+$//;  # Remove trailing spaces
+                }
+                $i++;
+        }
+        print "\nFound $i accounts\n";
+}
+## End of parameter handler
 
 
 if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
@@ -138,7 +143,7 @@ for ($c=0;$c<$i;$c++) {
 		or $exit++;
         setQuota($logproc, $cyrus, $newuser[$c], 'INBOX', $quota_size[$c], $sep, $verbose)
 		or $exit++;
-	createMailbox($logproc, $cyrus, $newuser[$c],'Spam', $partition[$c], $sep, $verbose)
+	createMailbox($logproc, $cyrus, $newuser[$c],'Spam', $partition[$c], $sep, $verbose, 'Junk')
 		or $exit++;
 	setMetadataMailbox($logproc, $cyrus, $newuser[$c],'Spam', 'expire', $expSpam[$c], $sep, $verbose)
 		or $exit++;
@@ -146,7 +151,7 @@ for ($c=0;$c<$i;$c++) {
 		or $exit++;
 	setACL($logproc, $cyrus, $newuser[$c],'Spam',$newuser[$c],'lrswipted', $sep, $verbose)
 		or $exit++;
-	createMailbox($logproc, $cyrus, $newuser[$c], 'Trash', $partition[$c], $sep, $verbose)
+	createMailbox($logproc, $cyrus, $newuser[$c], 'Trash', $partition[$c], $sep, $verbose, 'Trash')
 		or $exit++;
 	setMetadataMailbox($logproc, $cyrus, $newuser[$c], 'Trash', 'expire', $expTrash[$c], $sep, $verbose)
 		or $exit++;

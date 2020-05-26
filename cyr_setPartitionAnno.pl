@@ -7,7 +7,7 @@
 
 # Config setting#
 
-## Change nothing below, if you are a stupid user! ##
+
 
 my $usage  = "\nUsage:\t$0 [-d]\nSet partition for each domain.\nPartition path returned by \'df\' or \'cyr_df\' MUST be in the form \'/maildata/<fqdn>/*\'.\nMetapartition NOT checked.\nThis program MUST be run on the Cyrus IMAP server as daemon.\n-d: run in daemon mode.\n\n";
 
@@ -250,6 +250,7 @@ while ($continue) {
 	}
 
 	# Set Partitions
+	my $cVer = cyrusVersion_byIMAPTalk($IMAP);
 	while (  ($dom, $pt) = each(%$partition) ) {
 		$anno="/vendor/CSI/partition/$dom";
 		if (!($j->{$dom})) { $j->{$dom} = 0; } #First time initialization
@@ -259,7 +260,16 @@ while ($continue) {
 		if ($debug) {
 			printf ("%-50.50s %-40.40s %-3s\n",colored($dom,green),colored($part,yellow), colored($partition->{$dom}->{$part}->{'perc'},magenta));
 		}
-		if ($opt_d) { setAnnotationServer($mainproc, $IMAP,'', $anno,'value.priv',$part,0); }
+		if ($opt_d) {
+			if ( $cVer =~ /^3/ ) {
+				setMetadataServer($mainproc, $IMAP, '', $anno, 'private', $part, 0)
+					or $exit = 1;
+			}
+			else {
+				setAnnotationServer($mainproc, $IMAP, '', $anno, 'value.priv', $part, 0)
+					or $exit = 1;
+			}
+		}
 
 	}
 

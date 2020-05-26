@@ -14,4 +14,6 @@ Unexpunge and undeleted folders from one place. Deprecated. I suggest the new [P
 A list of mailboxes per domain, with quota report, partitions and Last update timestamp.
 
 These tool are very customized to work with my environment. Each account is LDAP profiled with attribute mailHost (imapserver).
+
+Note: Cyrus::IMAP::Admin is Cyrus IMAP version dependent. Some issue could happen if you try to run these scripts to a Cyrus IMAP of different version.
 This poor documentation will be updated soon...

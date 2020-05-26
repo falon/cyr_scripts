@@ -4,12 +4,26 @@ use strict;
 use vars qw($build);
 my $verbose = 0;
 my $logproc = 'cyrVersion';
+my $desc = " show the Cyrus version running on host provided in -h switch:\n";
+use Getopt::Long::Descriptive;
 use Config::IniFiles;
+# Parameters handler
+(my $opt, my $usage) = describe_options(
+   '%c %o '.$desc,
+     [ 'h=s', 'the server to connect to', { required => 1} ],
+     [],
+     [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
+     [],
+);
+
+print($usage->text), exit 255 if $opt->help;
+@ARGV == 0
+	or die("\nToo many arguments.\n\n".$usage->text);
+my $cyrus_server = $opt->h;
 my $cfg = new Config::IniFiles(
         -file => '/usr/local/cyr_scripts/cyr_scripts.ini',
         -nomultiline => 1,
         -handle_trailing_comment => 1);
-my $cyrus_server = $cfg->val('imap','server');
 my $cyrus_user = $cfg->val('imap','user');
 my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');

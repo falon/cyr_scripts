@@ -10,8 +10,8 @@ env:
                 - OS_TYPE=centos OS_VERSION=6 CYR_VERSION=2
                 - OS_TYPE=centos OS_VERSION=7 CYR_VERSION=2
                 - OS_TYPE=centos OS_VERSION=7 CYR_VERSION=3
-        services:
-                - docker
+services:
+        - docker
 addons:
         apt:
                 update: true

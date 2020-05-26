@@ -22,7 +22,7 @@ my $ldapBindUid = $cfg->val('ldap','user');
 my $ldapBindPwd = $cfg->val('ldap','pass');
 
 
-## Change nothing below, if you are a stupid user! ##
+
 
 my $usage  = "\nUsage:\t$0 -u <email.address@example.com>\n";
 $usage .= "Verify the existance of a mailrecipient object on LDAP.\n\n";

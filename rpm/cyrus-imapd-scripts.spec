@@ -3,7 +3,7 @@
 
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
-Version: 0.1.9
+Version: 0.2.0
 Release: 0%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
@@ -14,22 +14,36 @@ BuildArch:	noarch
 # Required for all versions
 Requires: cyrus-imapd-utils >= 2.4
 Requires: perl-Config-IniFiles >= 3
-Requires: perl-version
-Requires: perl-LDAP
-Requires: perl-Date-Calc
-Requires: perl-String-Scanf
-Requires: perl-Mail-IMAPTalk
-Requires: perl-Data-Validate-Domain
-Requires: perl-Unicode-IMAPUtf7
 Requires: perl-Proc-Daemon
+Requires: perl-String-Scanf
+Requires: perl-Unicode-IMAPUtf7
+%if 0%{?rhel} >= 7
+Requires: perl-Mail-IMAPTalk >=  4.04
+%else
+Requires: perl-Mail-IMAPTalk >= 3.01
+%endif
+Requires: perl-Encode-IMAPUTF7
+Requires: perl-Data-Validate-Domain
+Requires: perl(Getopt::Long)
+Requires: perl(Encode)
+Requires: perl(Env)
+Requires: perl-Data-Dumper
+Requires: perl-Date-Calc
+Requires: perl-libwww-perl
+Requires: perl-LDAP
+Requires: perl-Proc-Daemon
+Requires: perl-String-Scanf
+Requires: perl-Switch
+Requires: perl-Sys-Syslog
 Requires: perl-URI
+Requires: perl-version
+Requires: perl-Scalar-List-Utils
+Requires: which
 
 %if %systemd
 # Required for systemd
 %{?systemd_requires}
 Requires: systemd
-Requires: perl-Env
-Requires: perl-Sys-Syslog
 Requires: systemd-unit-status-email
 BuildRequires: systemd
 %else
@@ -142,6 +156,11 @@ exit 0
 
 
 %changelog
+* Mon May 25 2020 Marco Favero <marco.favero@csi.it> 0.2.0-0
+- new release for Cyrus 3.1
+- new input parameter handler
+- Cyrus::IMAP::Admin is no longer fully compatible with
+  Cyrus IMAP 2 about GETANNOTATION support. 
 * Mon Jan 13 2020 Marco Favero <marco.favero@csi.it> 0.1.9-0
 - minor fix and feature to set ACL on all folders.
 * Thu Jun 06 2019 Marco Favero <marco.favero@csi.it> 0.1.8-0
