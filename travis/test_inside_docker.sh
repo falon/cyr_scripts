@@ -195,11 +195,20 @@ sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)[=\1:/usr/lib/cyrus-imapd
 test_exit=$?
 
 if [ $test_exit -eq "0" ]; then
-	curl -1sLf \
-		  'https://dl.cloudsmith.io/public/cloudsmith/cli/cfg/setup/bash.rpm.sh' \
-		    | sudo -E bash
-	yum install cloudsmith-cli
+	if [ "${OS_VERSION}" -ge "7" ]; then
+		yum -y install python3-pip
+		pip3 install --upgrade cloudsmith-cli
+	else
+		yum -y install python-pip
+		pip install --upgrade cloudsmith-cli
+	fi
 	export CLOUDSMITH_API_KEY=2665bf65dd124524a79903591128ee3d2ddc0c62
 	cloudsmith push rpm csi/cyrus-scripts/el/${OS_VERSION} ${RPM_LOCATION}/cyrus-imapd-scripts-${package_version}-${package_release}.el${OS_VERSION}.noarch.rpm
+	export CS=$?
+	if [ ${CS} -ne "0" ]; then
+		printf "%-40s\t[\e[31;5m %s \e[0m]\n" "Cloudsmith export" FAIL
+	else
+		printf "%-40s\t[\e[32m %s \e[0m]\n" "Cloudsmith export" OK
+	fi
 fi
 exit $test_exit
