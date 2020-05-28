@@ -194,22 +194,27 @@ sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)[=\1:/usr/lib/cyrus-imapd
 /setup/travis/test_suite.sh ${OS_TYPE}
 test_exit=$?
 
-if [ $test_exit -eq "0" ]  && [ "${CYR_VERSION}" -ne "2" ] && [ "${OS_VERSION}" -ne "7" ]; then
-	export LC_ALL=en_US.utf-8
-	export LANG=en_US.utf-8
-	if [ "${OS_VERSION}" -ge "7" ]; then
-		yum -y install python3-pip
-	else
-		yum -y install python34 python34-pip
-	fi
-	pip3 install --upgrade cloudsmith-cli
-	export CLOUDSMITH_API_KEY=2665bf65dd124524a79903591128ee3d2ddc0c62
-	cloudsmith push rpm csi/cyrus-scripts/el/${OS_VERSION} ${RPM_LOCATION}/cyrus-imapd-scripts-${package_version}-${package_release}.el${OS_VERSION}.noarch.rpm
-	export CS=$?
-	if [ ${CS} -ne "0" ]; then
-		printf "%-40s\t[\e[31;5m %s \e[0m]\n" "Cloudsmith export" FAIL
-	else
-		printf "%-40s\t[\e[32m %s \e[0m]\n" "Cloudsmith export" OK
+# Cloudsmith upload if successful test
+if [ $test_exit -eq "0" ]; then
+	if [ "${CYR_VERSION}" -ne "2" ] || [ "${OS_VERSION}" -ne "7" ] ); then
+		export LC_ALL=en_US.utf-8
+		export LANG=en_US.utf-8
+		if [ "${OS_VERSION}" -ge "7" ]; then
+			yum -y install python3-pip
+		else
+			yum -y install python34 python34-pip
+		fi
+		pip3 install --upgrade cloudsmith-cli
+		export CLOUDSMITH_API_KEY=2665bf65dd124524a79903591128ee3d2ddc0c62
+		cloudsmith push rpm csi/cyrus-scripts/el/${OS_VERSION} ${RPM_LOCATION}/cyrus-imapd-scripts-${package_version}-${package_release}.el${OS_VERSION}.noarch.rpm
+		export CS=$?
+		if [ ${CS} -ne "0" ]; then
+			printf "%-40s\t[\e[31;5m %s \e[0m]\n" "Cloudsmith export" FAIL
+		else
+			printf "%-40s\t[\e[32m %s \e[0m]\n" "Cloudsmith export" OK
+		fi
 	fi
 fi
+
+# Return the exit test for Travis verdict
 exit $test_exit
