@@ -194,7 +194,7 @@ sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)[=\1:/usr/lib/cyrus-imapd
 /setup/travis/test_suite.sh ${OS_TYPE}
 test_exit=$?
 
-if [ $test_exit -eq "0" ]  && [ "${CYR_VERSION}" -eq "3" ]; then
+if [ $test_exit -eq "0" ]  && [ "${CYR_VERSION}" -ne "2" ] && [ "${OS_VERSION}" -ne "7" ]; then
 	export LC_ALL=en_US.utf-8
 	export LANG=en_US.utf-8
 	if [ "${OS_VERSION}" -ge "7" ]; then
