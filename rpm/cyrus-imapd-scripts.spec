@@ -12,32 +12,37 @@ Source0: https://github.com/falon/%{upname}/archive/master.zip
 BuildArch:	noarch
 
 # Required for all versions
-Requires: cyrus-imapd-utils >= 2.4
-Requires: perl-Config-IniFiles >= 3
-Requires: perl-Proc-Daemon
-Requires: perl-String-Scanf
-Requires: perl-Unicode-IMAPUtf7
-%if 0%{?rhel} >= 7
-Requires: perl-Mail-IMAPTalk >=  4.04
-%else
-Requires: perl-Mail-IMAPTalk >= 3.01
-%endif
-Requires: perl-Encode-IMAPUTF7
-Requires: perl-Data-Validate-Domain
-Requires: perl(Getopt::Long)
+Requires: perl(Config::IniFiles) >= 3
+Requires: perl(Cyrus::IMAP::Admin) >= 2.4
+Requires: perl(Data::Dumper)
+Requires: perl(Data::Validate::Domain)
+Requires: perl(Date::Calc)
 Requires: perl(Encode)
+Requires: perl(Encode::IMAPUTF7)
 Requires: perl(Env)
-Requires: perl-Data-Dumper
-Requires: perl-Date-Calc
-Requires: perl-libwww-perl
-Requires: perl-LDAP
-Requires: perl-Proc-Daemon
-Requires: perl-String-Scanf
-Requires: perl-Switch
-Requires: perl-Sys-Syslog
-Requires: perl-URI
-Requires: perl-version
-Requires: perl-Scalar-List-Utils
+Requires: perl(Getopt::Long)
+Requires: perl(Getopt::Long::Descriptive)
+Requires: perl(Params::Validate) >= 0.97
+Requires: perl(Getopt::Std)
+Requires: perl(LWP::UserAgent)
+Requires: perl(Net::LDAP)
+Requires: perl(POSIX)
+Requires: perl(Proc::Daemon)
+Requires: perl(String::Scanf)
+Requires: perl(Switch)
+Requires: perl(Sys::Syslog)
+Requires: perl(URI)
+Requires: perl(Unicode::IMAPUtf7)
+Requires: perl(feature)
+Requires: perl(strict)
+Requires: perl(vars)
+Requires: perl(warnings)
+Requires: perl(version)
+%if 0%{?rhel} >= 7
+Requires: perl(Mail::IMAPTalk) >=  4.04
+%else
+Requires: perl(Mail::IMAPTalk) >= 3.01
+%endif
 Requires: which
 
 %if %systemd
@@ -157,10 +162,10 @@ exit 0
 
 %changelog
 * Mon May 25 2020 Marco Favero <marco.favero@csi.it> 0.2.0-0
-- new release for Cyrus 3.1
+- new release for Cyrus IMAP 3.2
 - new input parameter handler
-- Cyrus::IMAP::Admin is no longer fully compatible with
-  Cyrus IMAP 2 about GETANNOTATION support. 
+- Cyrus::IMAP::Admin on Cyrus IMAP 3 is no longer fully
+  compatible with Cyrus IMAP 2.4 regarding  GETANNOTATION. 
 * Mon Jan 13 2020 Marco Favero <marco.favero@csi.it> 0.1.9-0
 - minor fix and feature to set ACL on all folders.
 * Thu Jun 06 2019 Marco Favero <marco.favero@csi.it> 0.1.8-0
