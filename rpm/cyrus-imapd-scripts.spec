@@ -13,7 +13,7 @@ BuildArch:	noarch
 
 # Required for all versions
 Requires: perl(Config::IniFiles) >= 3
-Requires: perl(Cyrus::IMAP::Admin) >= 2.4
+Requires: perl(Cyrus::IMAP::Admin)
 Requires: perl(Data::Dumper)
 Requires: perl(Data::Validate::Domain)
 Requires: perl(Date::Calc)
@@ -38,12 +38,20 @@ Requires: perl(strict)
 Requires: perl(vars)
 Requires: perl(warnings)
 Requires: perl(version)
+Requires: which
+# Required OS dependent
 %if 0%{?rhel} >= 7
 Requires: perl(Mail::IMAPTalk) >=  4.04
 %else
 Requires: perl(Mail::IMAPTalk) >= 3.01
 %endif
-Requires: which
+#	Deeper check on perl(Cyrus::IMAP::Admin)
+%if 0%{?rhel} >= 8
+Requires: perl-Cyrus >= 3.2.0
+%else
+Requires: cyrus-imapd-utils >= 2.4
+%endif
+
 
 %if %systemd
 # Required for systemd

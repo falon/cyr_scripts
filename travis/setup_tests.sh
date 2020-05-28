@@ -19,7 +19,7 @@ elif [ "${OS_VERSION}" -eq "6" ]; then
          /bin/bash -c "bash -x /setup/travis/test_inside_docker.sh ${OS_TYPE} ${OS_VERSION} ${CYR_VERSION};
 	 echo \$? > /setup/exit_code.tmp"
 
-elif [ "${OS_VERSION}" -eq "7" ]; then
+elif [ "${OS_VERSION}" -ge "7" ]; then
 
     echo -en "\n\n \e[48;5;17;97mRUN DOCKER\e[0m\n\n"
     sudo docker run --privileged --detach --tty --interactive --env "container=docker" \
