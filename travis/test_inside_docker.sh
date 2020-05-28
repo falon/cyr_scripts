@@ -74,7 +74,7 @@ fi
 # IMAP
 echo -en "\n\n \e[48;5;17;97mINSTALL CYRUS IMAP\e[0m\n\n"
 if [ "${OS_VERSION}" -le "7" ] && [ "${CYR_VERSION}" -eq "2" ]; then
-	yum -y install /$HOME/rpmbuild/RPMS/x86_64/cyrus-imapd-2.4.20-4.el${OS_VERSION}.x86_64.rpm /$HOME/rpmbuild/RPMS/x86_64/cyrus-imapd-utils-2.4.20-4.el${OS_VERSION}.x86_64.rpm
+	yum -y install $HOME/rpmbuild/RPMS/x86_64/cyrus-imapd-2.4.20-4.el${OS_VERSION}.x86_64.rpm $HOME/rpmbuild/RPMS/x86_64/cyrus-imapd-utils-2.4.20-4.el${OS_VERSION}.x86_64.rpm
 elif [ "${OS_VERSION}" -eq "7" ]; then
 	if [ "${CYR_VERSION}" -eq "3" ]; then
 		# Install Cyrus 3 from uxrepo
@@ -160,21 +160,21 @@ fi
 # Prepare the RPM environment
 echo -en "\n\n \e[48;5;17;97mMAKE YUM PACKAGES\e[0m\n\n"
 
-cp -v /setup/rpm/cyrus-imapd-scripts.spec /$HOME/rpmbuild/SPECS
+cp -v /setup/rpm/cyrus-imapd-scripts.spec $HOME/rpmbuild/SPECS
 package_version=`grep Version /setup/rpm/cyrus-imapd-scripts.spec | awk '{print $2}'`
 package_release=`grep Release: /setup/rpm/cyrus-imapd-scripts.spec | awk '{print $2}' | awk -F '%' '{print $1}'`
 package_branch=master
 pushd /setup
 git archive --format=zip --prefix=cyr_scripts-${package_branch}/ HEAD \
-	        -o /$HOME/rpmbuild/SOURCES/${package_branch}.zip
+	        -o $HOME/rpmbuild/SOURCES/${package_branch}.zip
 popd
 # Build the RPM
 echo RPMBUILD
-rpmbuild -ba /$HOME/rpmbuild/SPECS/cyrus-imapd-scripts.spec
+rpmbuild -ba $HOME/rpmbuild/SPECS/cyrus-imapd-scripts.spec
 
 # After building the RPM, try to install it
 echo -en "\n\n \e[48;5;17;97mINSTALL PACKAGES BUILT IN PREVIOUS STEP\e[0m\n\n"
-RPM_LOCATION=/$HOME/rpmbuild/RPMS/noarch
+RPM_LOCATION=$HOME/rpmbuild/RPMS/noarch
 yum install -y ${RPM_LOCATION}/cyrus-imapd-scripts-${package_version}-${package_release}.el${OS_VERSION}.noarch.rpm
 if [ "${OS_VERSION}" -ge "7" ]; then
 	systemd-tmpfiles --create
@@ -194,16 +194,15 @@ sudo sed -i -r -e '/^\s*Defaults\s+secure_path/ s[=(.*)[=\1:/usr/lib/cyrus-imapd
 /setup/travis/test_suite.sh ${OS_TYPE}
 test_exit=$?
 
-if [ $test_exit -eq "0" ]; then
+if [ $test_exit -eq "0" ]  && [ "${CYR_VERSION}" -eq "3" ]; then
 	export LC_ALL=en_US.utf-8
 	export LANG=en_US.utf-8
 	if [ "${OS_VERSION}" -ge "7" ]; then
 		yum -y install python3-pip
-		pip3 install --upgrade cloudsmith-cli
 	else
-		yum -y install python-pip
-		pip install --upgrade cloudsmith-cli
+		yum -y install python34 python34-pip
 	fi
+	pip3 install --upgrade cloudsmith-cli
 	export CLOUDSMITH_API_KEY=2665bf65dd124524a79903591128ee3d2ddc0c62
 	cloudsmith push rpm csi/cyrus-scripts/el/${OS_VERSION} ${RPM_LOCATION}/cyrus-imapd-scripts-${package_version}-${package_release}.el${OS_VERSION}.noarch.rpm
 	export CS=$?
