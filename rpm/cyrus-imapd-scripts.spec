@@ -13,6 +13,7 @@ BuildArch:	noarch
 
 # Required for all versions
 Requires: perl(Config::IniFiles) >= 3
+Requires: perl(List::Util) >= 1.33
 Requires: perl(Cyrus::IMAP::Admin)
 Requires: perl(Data::Dumper)
 Requires: perl(Data::Validate::Domain)

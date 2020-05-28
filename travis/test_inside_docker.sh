@@ -153,6 +153,7 @@ elif [ "${OS_VERSION}" -eq "6" ]; then
 		perl-Unicode-IMAPUtf7 perl-Data-Validate-Domain perl-Data-Dumper perl-Date-Calc \
 		perl-libwww-perl perl-LDAP perl-Proc-Daemon perl-String-Scanf perl-Switch perl-Sys-Syslog \
 		perl-URI perl-version \
+		http://repo.openfusion.net/centos${OS_VERSION}-x86_64/perl-Scalar-List-Utils-1.39-1.of.el${OS_VERSION}.x86_64.rpm \
 		http://repo.openfusion.net/centos${OS_VERSION}-x86_64/perl-Params-Validate-1.13-1.of.el${OS_VERSION}.x86_64.rpm
 fi
 
