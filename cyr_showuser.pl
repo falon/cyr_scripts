@@ -119,7 +119,7 @@ for ($c=0;$c<$i;$c++) {
 			}
 			#if ( $cVer =~ /^3/ ) {
 				%anno = %{$anno_var{$mailboxes[$m][0]}{'shared'}};
-				$anno_prefix = '/mailbox//vendor/cmu/cyrus-imapd';
+				$anno_prefix = '/mailbox//shared/vendor/cmu/cyrus-imapd';
 			#}
 			#if ( $cVer =~ /^(v|)2/ ) {
 			#	%anno = %anno_var;

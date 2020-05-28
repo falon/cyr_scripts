@@ -4,7 +4,7 @@
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
 Version: 0.2.0
-Release: 0%{?dist}
+Release: 1%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
 URL: https://falon.github.io/%{upname}/
@@ -112,6 +112,9 @@ mkdir -p %{buildroot}/opt/%{upname}
 mkdir -p %{buildroot}%{_sysconfdir}/%{upname}
 rm README.md *.yml
 chmod 700 *.pl
+%if 0%{?rhel} < 8
+sed -i 's|\/mailbox\/\/shared\/vendor\/cmu\/cyrus-imapd|/mailbox//vendor/cmu/cyrus-imapd|' cyr_showuser.pl;
+%endif
 sed -i 's|\/usr\/local\/%{upname}\/core\.pl|\/opt\/%{upname}\/core\.pl|' *.pl
 sed -i "s|'\/usr\/local\/%{upname}\/cyr_scripts.ini'|'%{_sysconfdir}/%{upname}\/cyr_scripts.ini'|" *.pl
 sed -i 's|\/usr\/local\/%{upname}|%{_sysconfdir}\/%{upname}|' cyr
@@ -170,6 +173,8 @@ exit 0
 
 
 %changelog
+* Thu May 28 2020 Marco Favero <marco.favero@csi.it> 0.2.0-1
+- try to add retrocompatibility for cyr_showuser.pl
 * Mon May 25 2020 Marco Favero <marco.favero@csi.it> 0.2.0-0
 - new release for Cyrus IMAP 3.2
 - new input parameter handler
