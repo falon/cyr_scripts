@@ -196,7 +196,7 @@ test_exit=$?
 
 # Cloudsmith upload if successful test
 if [ $test_exit -eq "0" ]; then
-	if [ "${CYR_VERSION}" -ne "2" ] || [ "${OS_VERSION}" -ne "7" ] ); then
+	if [ "${CYR_VERSION}" -ne "2" ] || [ "${OS_VERSION}" -ne "7" ]; then
 		export LC_ALL=en_US.utf-8
 		export LANG=en_US.utf-8
 		if [ "${OS_VERSION}" -ge "7" ]; then
