@@ -10,6 +10,7 @@ env:
                 - OS_TYPE=centos OS_VERSION=6 CYR_VERSION=2
                 - OS_TYPE=centos OS_VERSION=7 CYR_VERSION=2
                 - OS_TYPE=centos OS_VERSION=7 CYR_VERSION=3
+                - OS_TYPE=centos OS_VERSION=8 CYR_VERSION=3
 services:
         - docker
 addons:
@@ -30,6 +31,7 @@ addons:
                         - libswitch-perl
                         - libconfig-inifiles-perl
                         - libdata-validate-domain-perl
+                        - libgetopt-long-descriptive-perl
                         - libdate-calc-perl
                         - libwww-perl
                         - libmail-imaptalk-perl
