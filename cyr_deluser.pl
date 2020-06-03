@@ -129,5 +129,6 @@ for ($c=0;$c<$i;$c++) {
         deleteMailbox($logproc, $cyrus, $user[$c], 'INBOX', $sep, $verbose)
 		or $exit++;
 	ldapDeluser($logproc,$ldap,$ldapBase,$user[$c],$cyrus_server,'removed',$verbose);
+		or $exit++;
 }
 exit($exit);

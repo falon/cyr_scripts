@@ -9,7 +9,7 @@ pass	= cyrusadmin
 [ldap]
 server	= localhost
 port	= 389
-baseDN	= c=it
+baseDN	= ou=People,c=it
 user	= cn=Directory Manager
 pass	= ldapassword
 
