@@ -134,7 +134,7 @@ if ($opt->mode eq 'u') {
 		die("\nInsufficient arguments.\n\n".$usage->text);
 	}
 	if ( defined($opt->password) ) {
-		$password[0] = $opt->password);
+		$password[0] = $opt->password;
 	} else {
 		die("\nInsufficient arguments.\n\n".$usage->text);
 	}
