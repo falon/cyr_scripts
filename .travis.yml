@@ -88,7 +88,7 @@ install:
         - sudo usermod -a -G travis cyrus
 
 before_script:
-        - sudo testsaslauthd -u marco.favero@example.com -p password -f /var/run/saslauthd/mux
+        - sudo testsaslauthd -u jeremy@example.com -p password -f /var/run/saslauthd/mux
         - sudo chmod 700 travis/test_suite.sh
 
 script:

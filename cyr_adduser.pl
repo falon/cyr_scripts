@@ -56,6 +56,7 @@ my @newuser = undef;
 my @partition = undef;
 my @quota_size = undef;
 my $autopart = undef;
+my @password = undef;
 my $logproc='adduser';
 my $exit = 0;
 my $cyrus;
@@ -76,7 +77,7 @@ my ($opt, $usage) = describe_options(
         hidden => {
                 one_of => [
                         [ 'u=s', 'the username' ],
-                        [ 'file|f=s', 'read a file with lines in the form <user>;<partition>;<quota>;<spamexp>;<trashexp>;<name>;<surname>;<mail>' ]
+                        [ 'file|f=s', 'read a file with lines in the form <user>;<partition>;<quota>;<spamexp>;<trashexp>;<name>;<surname>;<mail>;<password>' ]
                 ],
         },
   ],
@@ -84,6 +85,7 @@ my ($opt, $usage) = describe_options(
   [ 'gn=s', 'Name of the user (in combination with -u)' ],
   [ 'sn=s', 'Surname of the user (in combination with -u)' ],
   [ 'mail=s', 'Email address of the user (in combination with -u)' ],
+  [ 'password=s', 'Password of the user (in combination with -u)' ],
   [ 'p=s', 'partition name (in combination with -u)' ],
   [ 'q=s', 'quota root (in combination with -u)'],
   [ 'spamexp=s', 'Spam folder expiration in days (in combination with -u)'],
@@ -131,6 +133,11 @@ if ($opt->mode eq 'u') {
 	} else {
 		die("\nInsufficient arguments.\n\n".$usage->text);
 	}
+	if ( defined($opt->password) ) {
+		$password[0] = $opt->password);
+	} else {
+		die("\nInsufficient arguments.\n\n".$usage->text);
+	}
 	if ( defined($opt->autopart) ) {
 		$autopart = $opt->autopart;
 	}
@@ -146,11 +153,11 @@ if ($opt->mode eq 'file') {
         close(DAT);
         foreach $line (@raw_data) {
                 wchomp($line);
-                @PARAM=split(/\;/,$line,8);
-                if ($#PARAM != 7) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
+                @PARAM=split(/\;/,$line,9);
+                if ($#PARAM != 8) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
                 else {
-                        ($newuser[$i],$partition[$i],$quota_size[$i],$expSpam[$i],$expTrash[$i],$name[$i],$surname[$i],$mail[$i])=@PARAM;
-			$mail[$i]=~ s/\s+$//;  # Remove trailing spaces
+                        ($newuser[$i],$partition[$i],$quota_size[$i],$expSpam[$i],$expTrash[$i],$name[$i],$surname[$i],$mail[$i],$password[$i])=@PARAM;
+			$password[$i]=~ s/\s+$//;  # Remove trailing spaces
                 }
                 $i++;
         }
@@ -213,7 +220,7 @@ LOOP: for ($c=0;$c<$i;$c++) {
 		or $exit++;
 	createMailbox($logproc, $cyrus, $newuser[$c], 'Drafts', $partition[$c], $sep, $verbose, 'Drafts')
 		or $exit++;
-	ldapAdduser($logproc,$ldap,$ldapBase,$newuser[$c],$cyrus_server,$name[0],$surname[0],$mail[0],$verbose)
+	ldapAdduser($logproc,$ldap,$ldapBase,$newuser[$c],$cyrus_server,$name[$c],$surname[$c],$mail[$c],$password[$c],$verbose)
 		or $exit++;
 ##	setACL($logproc, $cyrus, $newuser[$c], 'Trash', $newuser[$c], 'lrswipktecd', $sep, $verbose);
 }

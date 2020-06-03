@@ -32,21 +32,21 @@ objectClass: organization
 objectClass: domainRelatedObject
 o: example.com
 
-#dn: uid=marco.favero@example.com,o=example.com,ou=People,c=it
-#mailHost: localhost
-#mailDeliveryOption: mailbox
-#mailUserStatus: active
-#mail: marco.favero@example.com
-#uid: marco.favero@example.com
-#userPassword: password
-#cn: Marco Favero
-#sn: Favero
-#givenName: Marco
-#objectClass: top
-#objectClass: person
-#objectClass: organizationalPerson
-#objectClass: inetOrgPerson
-#objectClass: inetMailUser
-#objectClass: mailRecipient
-#mailAlternateAddress: marco@example.com
-#mailPostfixTransport: lmtp:[localhost]
+dn: uid=jeremy@example.com,o=example.com,ou=People,c=it
+mailHost: localhost
+mailDeliveryOption: mailbox
+mailUserStatus: removed
+mail: jeremy.ivor@example.com
+uid: jeremy@example.com
+userPassword: password
+cn: Jeremy Ivor
+sn: Ivor
+givenName: Jeremy
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: inetMailUser
+objectClass: mailRecipient
+mailAlternateAddress: jeremy@example.com
+mailPostfixTransport: lmtp:[localhost]

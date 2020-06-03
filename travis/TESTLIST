@@ -1,6 +1,6 @@
 ./cyr_version.pl -h localhost
 sudo -u cyrus ./cyr_setPartitionAnno.pl -d
-./cyr_adduser.pl -u marco.favero@example.com -h localhost -p maildata1 -q 200 --spamexp 30 --trashexp 15 --gn Marco --sn Favero --mail zorro@uc.csi.it
+./cyr_adduser.pl -u marco.favero@example.com -h localhost -p maildata1 -q 200 --spamexp 30 --trashexp 15 --gn Marco --sn Favero --mail zorro@uc.csi.it --password password
 ./cyr_checkLDAPUser.pl -u marco.favero@example.com
 ./cyr_adduser.pl --file travis/adduser.txt -h localhost
 ./cyr_addmailbox.pl -u pino@example.com -h localhost -p maildata1 -q 20 

@@ -955,7 +955,7 @@ sub ldapAdduser {
 	use Sys::Syslog;
 	my $error= undef;
 	my $code = NULL;
-	my ($mainproc,$ldap,$ldapBase,$uid,$mailhost,$name,$surname,$mail,$v) = @_;
+	my ($mainproc,$ldap,$ldapBase,$uid,$mailhost,$name,$surname,$mail,$pwd,$v) = @_;
 	openlog("$mainproc/ldapAddUser", "pid", LOG_MAIL);
 
         $mesg = $ldap->search( # perform a search
@@ -996,6 +996,7 @@ sub ldapAdduser {
 					mail			=> $mail,
 					objectClass		=> ['top', 'person', 'organizationalPerson', 'inetOrgPerson', 'inetMailUser', 'mailRecipient' ],
 					uid			=> $uid,
+					userPassword		=> $pwd,
 					mailHost		=> $mailhost,
 					mailPostfixTransport	=> "lmtp:[$mailhost]",
 					mailUserStatus		=> 'active',
