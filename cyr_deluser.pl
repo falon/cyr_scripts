@@ -8,7 +8,7 @@
 
 
 
-my $desc  = "removes all mailboxes of a user. Provide the following parameters:\n";
+my $desc  = "removes permanently all mailboxes of a user. Provide the following parameters:\n";
 
 use Config::IniFiles;
 use Getopt::Long::Descriptive;
@@ -23,6 +23,7 @@ my $exit = 0;
 
 require "/usr/local/cyr_scripts/core.pl";
 use Cyrus::IMAP::Admin;
+use Net::LDAP;
 
 #
 # CONFIGURATION PARAMS
@@ -54,6 +55,13 @@ my $c = 0;
 my @user = undef;
 my $logproc='deluser';
 my $cyrus;
+
+my $ldap;       # LDAP connection handler
+my $ldaphost    = $cfg->val('ldap','server');
+my $ldapPort    = $cfg->val('ldap','port');
+my $ldapBase    = $cfg->val('ldap','baseDN');  # Base dn containing whole domains
+my $ldapBindUid = $cfg->val('ldap','user');
+my $ldapBindPwd = $cfg->val('ldap','pass');
 
 # Parameter handler
 my ($opt, $usage) = describe_options(
@@ -105,11 +113,21 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
 	exit(255);
 }
 
+if ( !($ldap=ldapconnect($logproc, $ldaphost, $ldapPort, $v)) ) {
+        exit(255);
+}
+
+if ( (ldapbind($logproc, $ldap, $ldaphost, $ldapPort, $ldapBindUid, $ldapBindPwd, $v)) == 0 ) {
+        $ldap->disconnect ($ldaphost, port => $ldapPort);
+        exit(255);
+}
+
 
 for ($c=0;$c<$i;$c++) {
 	setACL($logproc, $cyrus, $user[$c],'INBOX', $cyrus_user,'all',$sep,$verbose)
 		or $exit++;
         deleteMailbox($logproc, $cyrus, $user[$c], 'INBOX', $sep, $verbose)
 		or $exit++;
+	ldapDeluser($logproc,$ldap,$ldapBase,$user[$c],$cyrus_server,'removed',$verbose);
 }
 exit($exit);

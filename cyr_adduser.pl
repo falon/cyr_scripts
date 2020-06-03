@@ -1,21 +1,8 @@
 #!/usr/bin/perl -w
 #
 # This will create a new mailbox and set a quota on the new user. Just be 
-# sure that you installed the Cyrus::IMAP perl module.  If you did 
-# 'make all && make install' or installed Cyrus using the FreeBSD ports you
-# don't have to do anything at all.
+# sure that you installed the Cyrus::IMAP perl module.
 #
-# Change the params below to match your mailserver settins, and
-# your good to go!
-#
-# Author: amram@manhattanprojects.com
-#
-# modified by Marco Fav
-#
-# Usage:
-#  -u <user> <part> <quota>         	   create <user> with <quota>
-#                                          into partition <part> with <spamexp> days of spamfolder
-#  -f <file>                               use a file in the form <user> <part> <quota> <spamexp>
 
 
 # Config setting#
@@ -35,6 +22,7 @@ my $cyrus_pass = $cfg->val('imap','pass');
 my $sep = $cfg->val('imap','sep');
 require "/usr/local/cyr_scripts/core.pl";
 use Cyrus::IMAP::Admin;
+use Net::LDAP;
 
 #
 # CONFIGURATION PARAMS
@@ -67,9 +55,18 @@ my $c = 0;
 my @newuser = undef;
 my @partition = undef;
 my @quota_size = undef;
+my $autopart = undef;
 my $logproc='adduser';
 my $exit = 0;
 my $cyrus;
+
+my $ldap;	# LDAP connection handler
+my $ldaphost    = $cfg->val('ldap','server');
+my $ldapPort    = $cfg->val('ldap','port');
+my $ldapBase    = $cfg->val('ldap','baseDN');  # Base dn containing whole domains
+my $ldapBindUid = $cfg->val('ldap','user');
+my $ldapBindPwd = $cfg->val('ldap','pass');
+
 
 # Parameter handler
 my ($opt, $usage) = describe_options(
@@ -79,15 +76,19 @@ my ($opt, $usage) = describe_options(
         hidden => {
                 one_of => [
                         [ 'u=s', 'the username' ],
-                        [ 'file|f=s', 'read a file with lines in the form <user>;<partition>;<quota>;<spamexp>;<trashexp>' ]
+                        [ 'file|f=s', 'read a file with lines in the form <user>;<partition>;<quota>;<spamexp>;<trashexp>;<name>;<surname>;<mail>' ]
                 ],
         },
   ],
   [],
+  [ 'gn=s', 'Name of the user (in combination with -u)' ],
+  [ 'sn=s', 'Surname of the user (in combination with -u)' ],
+  [ 'mail=s', 'Email address of the user (in combination with -u)' ],
   [ 'p=s', 'partition name (in combination with -u)' ],
   [ 'q=s', 'quota root (in combination with -u)'],
   [ 'spamexp=s', 'Spam folder expiration in days (in combination with -u)'],
   [ 'trashexp=s', 'Trash folder expiration in days (in combination with -u)'],
+  [ 'autopart', 'Let CSI Partition Manager to choose the partition'],
   [],
   [ 'help',       "print usage message and exit", { shortcircuit => 1 } ],
   [],
@@ -106,12 +107,38 @@ if ($opt->mode eq 'u') {
                 die("\nYou must specify a root mailbox in '-u'\n");
         }
         $newuser[0] = $opt->u;
-        $partition[0] = $opt->p;
+	if ( defined($opt->p) ) {
+		$partition[0] = $opt->p;
+	}
+	else {
+		$partition[0]='';
+	}
         $quota_size[0] = $opt->q;
 	$expSpam[0] = $opt->spamexp;
 	$expTrash[0] = $opt->trashexp;
+	if ( defined($opt->gn) ) {
+		$name[0] = $opt->gn;
+	} else {
+		die("\nInsufficient arguments.\n\n".$usage->text);
+	}
+	if ( defined($opt->sn) ){
+		$surname[0] = $opt->sn;
+	} else {
+		die("\nInsufficient arguments.\n\n".$usage->text);
+	}
+	if ( defined($opt->mail) ) {
+		$mail[0] = $opt->mail;
+	} else {
+		die("\nInsufficient arguments.\n\n".$usage->text);
+	}
+	if ( defined($opt->autopart) ) {
+		$autopart = $opt->autopart;
+	}
         $i = 1;
 }
+
+
+
 if ($opt->mode eq 'file') {
         $data_file = $opt->file;
         open(DAT, $data_file) || die("Could not open $data_file!");
@@ -119,11 +146,11 @@ if ($opt->mode eq 'file') {
         close(DAT);
         foreach $line (@raw_data) {
                 wchomp($line);
-                @PARAM=split(/\;/,$line,5);
-                if ($#PARAM != 4) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
+                @PARAM=split(/\;/,$line,8);
+                if ($#PARAM != 7) { die ("\nInconsistency in line\n<$line>\n Recheck <$data_file>\n"); }
                 else {
-                        ($newuser[$i],$partition[$i],$quota_size[$i],$expSpam[$i],$expTrash[$i])=@PARAM;
-			$expTrash[$i]=~ s/\s+$//;  # Remove trailing spaces
+                        ($newuser[$i],$partition[$i],$quota_size[$i],$expSpam[$i],$expTrash[$i],$name[$i],$surname[$i],$mail[$i])=@PARAM;
+			$mail[$i]=~ s/\s+$//;  # Remove trailing spaces
                 }
                 $i++;
         }
@@ -136,9 +163,36 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
         exit(255);
 }
 
+if ( !($ldap=ldapconnect($logproc, $ldaphost, $ldapPort, $verbose)) ) {
+	exit(255);
+}
 
-for ($c=0;$c<$i;$c++) {
+if ( (ldapbind($logproc, $ldap, $ldaphost, $ldapPort, $ldapBindUid, $ldapBindPwd, $verbose)) == 0 ) {
+	$ldap->disconnect ($ldaphost, port => $ldapPort);
+	exit(255);
+}
+
+openlog("$logproc/master", "pid", LOG_MAIL);
+LOOP: for ($c=0;$c<$i;$c++) {
 	print "\n\tAdding User: $newuser[$c]...\n";
+        if ($partition[$c] eq '') {
+                if ($autopart) {
+                        # CSI Partition Manager choice
+                        $partition[$c] = getDomainPart($logproc, $cyrus, $newuser[$c], $verbose);
+			if ($partition[$c] eq 'NIL') {
+				printLog('LOG_ERR', "action=checkpart mailbox=${newuser[$c]} status=fail error=\"An error occurred reading the  partition using autopart flag. Skipping.\"", $verbose);
+				$exit++;
+				next LOOP;
+			}
+				
+                }
+        }
+        else {
+                if ($autopart) {
+                        printLog('LOG_WARNING', "action=checkpart status=notice mailbox=${newuser[$c]} partition=${partition[$c]} detail=\"You define explicit partition name, but the autopartition flag too. Explicit declaration takes precedence.\"", $verbose);
+                }
+        }
+
 	createMailbox($logproc, $cyrus, $newuser[$c],'INBOX',$partition[$c], $sep, $verbose)
 		or $exit++;
         setQuota($logproc, $cyrus, $newuser[$c], 'INBOX', $quota_size[$c], $sep, $verbose)
@@ -155,6 +209,14 @@ for ($c=0;$c<$i;$c++) {
 		or $exit++;
 	setMetadataMailbox($logproc, $cyrus, $newuser[$c], 'Trash', 'expire', $expTrash[$c], $sep, $verbose)
 		or $exit++;
+	createMailbox($logproc, $cyrus, $newuser[$c], 'Sent', $partition[$c], $sep, $verbose, 'Sent')
+		or $exit++;
+	createMailbox($logproc, $cyrus, $newuser[$c], 'Drafts', $partition[$c], $sep, $verbose, 'Drafts')
+		or $exit++;
+	ldapAdduser($logproc,$ldap,$ldapBase,$newuser[$c],$cyrus_server,$name[0],$surname[0],$mail[0],$verbose)
+		or $exit++;
 ##	setACL($logproc, $cyrus, $newuser[$c], 'Trash', $newuser[$c], 'lrswipktecd', $sep, $verbose);
 }
+$ldap->disconnect ($ldaphost, port => $ldapPort);
+closelog();
 exit($exit);

@@ -3,8 +3,8 @@
 
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
-Version: 0.2.0
-Release: 1%{?dist}
+Version: 0.2.1
+Release: 0%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
 URL: https://falon.github.io/%{upname}/
@@ -173,6 +173,9 @@ exit 0
 
 
 %changelog
+* Wed Jun 03 2020 Marco Favero <marco.favero@csi.it> 0.2.1-0
+- new minor release. Now adduser and deluser manage the LDAP
+  entry too.
 * Thu May 28 2020 Marco Favero <marco.favero@csi.it> 0.2.0-1
 - try to add retrocompatibility for cyr_showuser.pl
 * Mon May 25 2020 Marco Favero <marco.favero@csi.it> 0.2.0-0

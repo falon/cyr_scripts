@@ -3,7 +3,7 @@
 # All this code written by Marco Fav, so you must use better code. You are advised!
 
 #########  Build release  #########
-our $build = '0.2.0 - 01 Jun 2020';
+our $build = '0.2.1 - 03 Jun 2020';
 ###################################
 
 
@@ -948,6 +948,143 @@ sub listACL {
   closelog();
   return $right;
 }
+
+
+sub ldapAdduser {
+	use Net::LDAP;
+	use Sys::Syslog;
+	my $error= undef;
+	my $code = NULL;
+	my ($mainproc,$ldap,$ldapBase,$uid,$mailhost,$name,$surname,$mail,$v) = @_;
+	openlog("$mainproc/ldapAddUser", "pid", LOG_MAIL);
+
+        $mesg = $ldap->search( # perform a search
+                base   => $ldapBase,
+                filter => "(&(objectClass=mailRecipient)(uid=$uid))",
+                attrs  => ['uid']
+        );
+        if ($mesg->code) {
+                $error=$mesg->error;
+                $code=$mesg->code;
+                printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" uid=$uid code=$code",$v);
+                closelog();
+                return 0;
+        }
+
+        $nret = $mesg->count;
+        if ($nret > 0) {
+		$error="The LDAP entry of <$uid> already exists. We won\'t create the entry.";
+		printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" uid=$uid code=$code",$v);
+		closelog();
+		return 0;
+	}
+	else {
+		# Add the LDAP entry
+		my ($user,$dom) = split('@',$uid);
+		if (not defined($dom)) {
+			$error="<$uid> is not in the form user\@domain";
+			printLog('LOG_ERR',"action=parseuid status=fail error=\"$error\" uid=$uid", $v);
+			closelog();
+			return 0;
+		}
+		my $dn="uid=$uid,o=$dom,$ldapBase";
+		$mesg = $ldap->add( $dn,
+				attrs => [
+					cn			=> [ "$name $surname" ],
+					sn			=> $surname,
+					givenName		=> $name,
+					mail			=> $mail,
+					objectClass		=> ['top', 'person', 'organizationalPerson', 'inetOrgPerson', 'inetMailUser', 'mailRecipient' ],
+					uid			=> $uid,
+					mailHost		=> $mailhost,
+					mailPostfixTransport	=> "lmtp:[$mailhost]",
+					mailUserStatus		=> 'active',
+					mailDeliveryOption	=> 'mailbox'
+				]
+			);
+		if ($mesg->code) {
+			$error=$mesg->error;
+			$code=$mesg->code;
+			printLog('LOG_ERR',"action=ldapadd status=fail error=\"$error\" uid=$uid code=$code",$v);
+			closelog();
+			return 0;
+		}
+		else {
+			printLog('LOG_INFO',"action=ldapadd status=success uid=$uid mail=$mail mailhost=$mailhost", $v);
+		        closelog();
+			return 1;
+		}
+	}
+}
+
+sub ldapDeluser {
+        use Net::LDAP;
+        use Sys::Syslog;
+	my $error= undef;
+	my $code = NULL;
+        my ($mainproc,$ldap,$ldapBase,$uid,$mailhost,$typeDel,$v) = @_;
+        openlog("$mainproc/ldapDelUser", "pid", LOG_MAIL);
+
+	my @allowed = ('deleted', 'removed');
+	if ( not ( $typeDel ~~ @allowed ) ) {
+		printLog('LOG_ERR',"action=parsearg status=fail error=\"$typeDel is not allowed as mailUserStatus\" uid=$uid",$v);
+		closelog();
+		return 0;
+	}
+
+        $mesg = $ldap->search( # perform a search
+                base   => $ldapBase,
+                filter => "(&(objectClass=mailRecipient)(uid=$uid))",
+                attrs  => ['uid', 'mailHost' ]
+        );
+
+        if ($mesg->code) {
+                $error=$mesg->error;
+                $code=$mesg->code;
+                printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" uid=$uid code=$code",$v);
+                closelog();
+                return 0;
+        }
+
+        $nret = $mesg->count;
+        if ($nret > 1) {
+                $error="Multiple instance found for <$uid>";
+                printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" uid=$uid code=$code",$v);
+                closelog();
+                return 0;
+        }
+        if ($nret < 1) {
+                $error="No instance found for <$uid>";
+                printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" action=search uid=$uid code=$code",$v);
+                closelog();
+                return 0;
+        }
+	my ($user,$dom) = split('@',$uid);
+	if (not defined($dom)) {
+		$error="<$uid> is not in the form 'user\@domain'";
+		printLog('LOG_ERR',"action=parseuid status=fail error=\"$error\" uid=$uid", $v);
+		closelog();
+		return 0;
+	}
+	my $dn="uid=$uid,o=$dom,$ldapBase";
+	$mesg = $ldap->modify( $dn,
+			replace => { mailUserStatus	=> $typeDel }
+		);
+	if ($mesg->code) {
+                $error=$mesg->error;
+                $code=$mesg->code;
+                printLog('LOG_ALERT',"action=ldapmod status=fail error=\"$error\" uid=$uid code=$code mailHost=$mailhost mailUserStatus=$typeDel",$v);
+		closelog();
+		return 0;
+	}
+	else {
+		printLog('LOG_INFO',"action=ldapmod status=success uid=$uid mailHost=$mailhost mailUserStatus=$typeDel",$v);
+		closelog();
+		return 1;
+	}
+}
+	
+
 
 
 sub ldapReplaceMailhost {
