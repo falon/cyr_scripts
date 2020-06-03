@@ -35,7 +35,7 @@ o: example.com
 dn: uid=jeremy@example.com,o=example.com,ou=People,c=it
 mailHost: localhost
 mailDeliveryOption: mailbox
-mailUserStatus: removed
+mailUserStatus: active
 mail: jeremy.ivor@example.com
 uid: jeremy@example.com
 userPassword: password
