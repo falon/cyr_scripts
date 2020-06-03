@@ -50,3 +50,41 @@ objectClass: inetMailUser
 objectClass: mailRecipient
 mailAlternateAddress: jeremy@example.com
 mailPostfixTransport: lmtp:[localhost]
+
+dn: uid=pluto@example.com,o=example.com,ou=People,c=it
+mailHost: localhost
+mailDeliveryOption: mailbox
+mailUserStatus: active
+mail: pluto@example.com
+uid: pluto@example.com
+userPassword: password
+cn: Cane Pluto
+sn: Cane
+givenName: Pluto
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: inetMailUser
+objectClass: mailRecipient
+mailAlternateAddress: plutone@example.com
+mailPostfixTransport: lmtp:[localhost]
+
+dn: uid=minni@example.com,o=example.com,ou=People,c=it
+mailHost: localhost
+mailDeliveryOption: mailbox
+mailUserStatus: active
+mail: minni@example.com
+uid: minni@example.com
+userPassword: password
+cn: Topa Minni
+sn: Topa
+givenName: Minni
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: inetMailUser
+objectClass: mailRecipient
+mailAlternateAddress: minnitopa@example.com
+mailPostfixTransport: lmtp:[localhost]
