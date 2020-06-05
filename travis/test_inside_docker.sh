@@ -205,7 +205,7 @@ if [ $test_exit -eq "0" ]; then
 			yum -y install python34 python34-pip
 		fi
 		pip3 install --upgrade cloudsmith-cli
-		export CLOUDSMITH_API_KEY=2665bf65dd124524a79903591128ee3d2ddc0c62
+		export CLOUDSMITH_API_KEY=818830a97fdebca222bf8edfd4a802651fb7acda
 		cloudsmith push rpm csi/cyrus-scripts/el/${OS_VERSION} ${RPM_LOCATION}/cyrus-imapd-scripts-${package_version}-${package_release}.el${OS_VERSION}.noarch.rpm
 		export CS=$?
 		if [ ${CS} -ne "0" ]; then

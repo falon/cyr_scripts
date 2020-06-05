@@ -660,7 +660,7 @@ sub setMetadataServer {
   if ($return == 1) {
         # Read current value, if it exists
 	$read=$imap->getmetadata($path, {depth => 'infinity'}, "/$valuetype$anno");
-        $oldvalue=$read->{$path}->{$anno}->{$valuetype};
+	$oldvalue=$read->{$path}->{"/$valuetype$anno"};
         if (!defined($oldvalue)) {$oldvalue = 'NIL';}
 
         # Check if value has to be changed, else exit
@@ -812,6 +812,7 @@ sub setQuota {
   use Unicode::IMAPUtf7;
   use Encode;
   use feature "switch";
+  no if $] >= 5.018, warnings => qw( experimental::smartmatch );
   my ($mainproc, $cyrus, $user, $subfolder, $quota_size, $sep, $v) = @_;
   my $code = 'ISO-8859-1';
   my @argv;
