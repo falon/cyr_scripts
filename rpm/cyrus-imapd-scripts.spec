@@ -3,7 +3,7 @@
 
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
-Version: 0.2.1
+Version: 0.2.2
 Release: 0%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
