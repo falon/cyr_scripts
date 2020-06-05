@@ -173,6 +173,10 @@ exit 0
 
 
 %changelog
+* Fri Jun 05 2020 Marco Favero <marco.favero@csi.it> 0.2.2-0
+- new minor release
+- FIX for some warnings on Perl
+- FIX in cyr_setPartitionAnno when reading the current value
 * Wed Jun 03 2020 Marco Favero <marco.favero@csi.it> 0.2.1-0
 - new minor release. Now adduser and deluser manage the LDAP
   entry too.
