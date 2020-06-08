@@ -4,7 +4,7 @@
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
 Version: 0.2.2
-Release: 0%{?dist}
+Release: 1%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
 URL: https://falon.github.io/%{upname}/
@@ -173,6 +173,8 @@ exit 0
 
 
 %changelog
+* Mon Jun 08 2020 Marco Favero <marco.favero@csi.it> 0.2.2-1
+- FIX exit code to 0 when --help switch is called.
 * Fri Jun 05 2020 Marco Favero <marco.favero@csi.it> 0.2.2-0
 - new minor release
 - FIX for some warnings on Perl
