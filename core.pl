@@ -660,7 +660,7 @@ sub setMetadataServer {
   if ($return == 1) {
         # Read current value, if it exists
 	$read=$imap->getmetadata($path, {depth => 'infinity'}, "/$valuetype$anno");
-	$oldvalue=$read->{$path}->{"/$valuetype$anno"};
+	$oldvalue=$read->{$path}->{lc "/$valuetype$anno"};
         if (!defined($oldvalue)) {$oldvalue = 'NIL';}
 
         # Check if value has to be changed, else exit
