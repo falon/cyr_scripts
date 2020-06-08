@@ -71,7 +71,7 @@ my ($opt, $usage) = describe_options(
 	hidden => {
 		one_of => [
   			[ 'u=s', 'the username' ],
-			[ 'file|f=s', 'read a file with lines in the form <server>;<user>;<partition>;<quota>' ]
+			[ 'file|f=s', 'read a file with lines in the form <user>;<partition>;<quota>' ]
 		], 
 	},
   ],
@@ -83,7 +83,7 @@ my ($opt, $usage) = describe_options(
   [],
 );
  
-print($usage->text), exit 255 if $opt->help;
+print($usage->text), exit 0 if $opt->help;
 @ARGV == 0
 	or die("\nToo many arguments.\n\n".$usage->text);
 

@@ -70,7 +70,7 @@ my ($opt, $usage) = describe_options(
    [],
 );
 
-print($usage->text), exit 255 if $opt->help;
+print($usage->text), exit 0 if $opt->help;
 @ARGV == 0
          or die("\nToo many arguments.\n\n".$usage->text);
 
