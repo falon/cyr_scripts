@@ -117,6 +117,8 @@ my $cyrus;
 
 for ($c=0;$c<$i;$c++) {
 
+	print "\n\tWorking on ${user[$c]}...";
+
 	$auth = {
 		-mechanism => 'PLAIN',
 		-service => 'imap',

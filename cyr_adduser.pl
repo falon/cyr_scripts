@@ -200,6 +200,14 @@ LOOP: for ($c=0;$c<$i;$c++) {
                 }
         }
 
+	if ( not parseuid($logproc,$newuser[$c],$verbose) ) {
+		$exit++;
+		next LOOP;
+	}
+	if ( not ldapAdduser($logproc,$ldap,$ldapBase,$newuser[$c],$cyrus_server,$name[$c],$surname[$c],$mail[$c],$password[$c],$verbose) ) {
+		$exit++;
+		next LOOP;
+	}
 	createMailbox($logproc, $cyrus, $newuser[$c],'INBOX',$partition[$c], $sep, $verbose)
 		or $exit++;
         setQuota($logproc, $cyrus, $newuser[$c], 'INBOX', $quota_size[$c], $sep, $verbose)
@@ -219,8 +227,6 @@ LOOP: for ($c=0;$c<$i;$c++) {
 	createMailbox($logproc, $cyrus, $newuser[$c], 'Sent', $partition[$c], $sep, $verbose, 'Sent')
 		or $exit++;
 	createMailbox($logproc, $cyrus, $newuser[$c], 'Drafts', $partition[$c], $sep, $verbose, 'Drafts')
-		or $exit++;
-	ldapAdduser($logproc,$ldap,$ldapBase,$newuser[$c],$cyrus_server,$name[$c],$surname[$c],$mail[$c],$password[$c],$verbose)
 		or $exit++;
 ##	setACL($logproc, $cyrus, $newuser[$c], 'Trash', $newuser[$c], 'lrswipktecd', $sep, $verbose);
 }

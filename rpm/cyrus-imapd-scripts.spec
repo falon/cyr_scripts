@@ -3,8 +3,8 @@
 
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
-Version: 0.2.2
-Release: 2%{?dist}
+Version: 0.2.3
+Release: 0%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
 URL: https://falon.github.io/%{upname}/
@@ -173,6 +173,10 @@ exit 0
 
 
 %changelog
+* Thu Jun 11 2020 Marco Favero <marco.favero@csi.it> 0.2.3-0
+- New minor release, bug fixes, improved README.
+- getPart, fix in reading partition.
+- cyr_setquota, new switch to remove a quotaroot.
 * Mon Jun 08 2020 Marco Favero <marco.favero@csi.it> 0.2.2-1
 - FIX exit code to 0 when --help switch is called.
 * Fri Jun 05 2020 Marco Favero <marco.favero@csi.it> 0.2.2-0

@@ -2,6 +2,12 @@
 # Author: MFF
 # Name: cyr_kidnapping.sh
 # Description: copy all file from a mbpath to a destination folder.
+#  This utility suppose we have partitions like:
+#	partition-maildata4: /maildata/example.com/maildata1
+#	partition-arcmaildata4:  /archivio/example.com/maildata1
+#  and each account can have quotaroots on both paths.
+#  The first path is taken from mbpath, the second is built replacing
+#  "maildata" with "archivio".
 #
 
 echo -en "\n\n Welcome to Cyr Kidnapping\n"
@@ -43,7 +49,7 @@ cyrpath=`$mbpath "user/$user"`
         fi
 echo $cyrpath
 echo  
-echo "*** Copying <$user>... ***"
+echo "*** Copying <$user> main path... ***"
 echo
 cp -apr $cyrpath $folder
 result=$?
@@ -51,6 +57,17 @@ result=$?
                 echo -en "\e[31mError in copy. Please check source and destination!!\e[39m\n\n"
                 exit 1;
         fi
+
+cyrpath2=`echo $cyrpath | sed -r 's|^\/maildata|/archivio|'`
+if [ -d $cyrpath2 ]; then
+	echo -en "\e[33mThe user has a secondary archivio root path. We proceed to copy this path too.\e[39m\n\n"
+	cp -apru $cyrpath2 $folder
+	result=$?
+	if [ "${result}" -ne "0" ] ; then
+                echo -en "\e[31mError in copy. Please check source and destination!!\e[39m\n\n"
+                exit 1;
+        fi
+fi
 
 echo "This is the destination folder now: "
 cd $folder

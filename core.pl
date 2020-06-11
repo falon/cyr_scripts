@@ -723,7 +723,12 @@ sub getPart {
 			for ($j=0;$j<$#info;$j+=2) {
 				$anno{$info[$j]} = $info[$j+1];
 			}
-			$part = $anno{$mailbox}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/partition'};
+			if ( $cVer !~ /^3.0/ ) {
+				$part = $anno{$mailbox}{'shared'}{'/mailbox//shared/vendor/cmu/cyrus-imapd/partition'};
+			}
+			else {
+				$part = $anno{$mailbox}{'shared'}{'/mailbox//vendor/cmu/cyrus-imapd/partition'};
+			}
 		}
 	}
 	if ( $cVer =~ /^(v|)2/ ) {
@@ -950,19 +955,33 @@ sub listACL {
   return $right;
 }
 
+sub parseuid {
+	my ($mainproc,$uid,$v) = @_;
+	my ($user,$dom) = split('@',$uid);
+	if (not defined($dom)) {
+		my $error="<$uid> is not in the form user\@domain";
+		openlog("$mainproc/parseuid", "pid", LOG_MAIL);
+		printLog('LOG_ERR',"action=parseuid status=fail error=\"$error\" uid=$uid", $v);
+		closelog();
+		return 0;
+	}
+	return 1;
+}
 
 sub ldapAdduser {
 	use Net::LDAP;
 	use Sys::Syslog;
 	my $error= undef;
 	my $code = NULL;
+	my $dn = NULL;
+	my $origStatus = NULL;
 	my ($mainproc,$ldap,$ldapBase,$uid,$mailhost,$name,$surname,$mail,$pwd,$v) = @_;
 	openlog("$mainproc/ldapAddUser", "pid", LOG_MAIL);
 
         $mesg = $ldap->search( # perform a search
                 base   => $ldapBase,
                 filter => "(&(objectClass=mailRecipient)(uid=$uid))",
-                attrs  => ['uid']
+                attrs  => ['uid', 'mailUserStatus']
         );
         if ($mesg->code) {
                 $error=$mesg->error;
@@ -974,8 +993,31 @@ sub ldapAdduser {
 
         $nret = $mesg->count;
         if ($nret > 0) {
+		# The LDAP entry already exists. But if the mailUserStatus is "removed", we can change it to
+		# "active" and let another task to add the IMAP mailbox.
+		# givenName, sn and mail are not checked against the values provided. We consider uid unique.
 		$error="The LDAP entry of <$uid> already exists. We won\'t create the entry.";
-		printLog('LOG_ERR',"action=ldapsearch status=fail error=\"$error\" uid=$uid code=$code",$v);
+		printLog('LOG_INFO',"action=ldapsearch status=success detail=\"$error\" uid=$uid code=$code",$v);
+		my $entry = $mesg->entry ( 0 );
+        	$origStatus = $entry->get_value( 'mailUserStatus' );
+        	if ( $origStatus eq 'removed' ) {
+			$dn= $mesg->entry->dn();
+            		$mesg = $ldap->modify( $dn,
+				replace => { 'mailUserStatus' => 'active' } );
+            		if ($mesg->code) {
+                		$error=$mesg->error;
+                		$code=$mesg->code;
+                		printLog('LOG_ALERT',"action=ldapmod status=fail error=\"$error\" uid=$uid code=$code origMailUserStatus=$origStatus mailUserStatus=active",$v);
+				closelog();
+				return 0;
+        		}
+        		else {
+                		printLog('LOG_INFO',"action=ldapmod status=success uid=$uid origMailUserStatus=$origStatus mailUserStatus=active",$v);
+                		closelog();
+                		return 1;
+        		}
+		}
+		printLog('LOG_ALERT',"action=ldapmod status=fail error=\"The entry already exists and its mailUserStatus does not allow a new mailbox account\" uid=$uid origMailUserStatus=$origStatus",$v);
 		closelog();
 		return 0;
 	}
@@ -988,7 +1030,7 @@ sub ldapAdduser {
 			closelog();
 			return 0;
 		}
-		my $dn="uid=$uid,o=$dom,$ldapBase";
+		$dn="uid=$uid,o=$dom,$ldapBase";
 		$mesg = $ldap->add( $dn,
 				attrs => [
 					cn			=> [ "$name $surname" ],

@@ -119,6 +119,8 @@ if ($opt->mode eq 'mboxold') {
         $part[0] = $opt->part;
         defined($part[0])
                 or $part[0]='';
+	$autopart = $opt->autopart;
+	$oldpart =  $opt->oldpart;
 	if ( defined($opt->utf7) ) {
 		print "\nParameter --utf7 ignored.\n";
 	}

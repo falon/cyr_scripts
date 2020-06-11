@@ -14,7 +14,7 @@ my $exit = 0;
 
 
 my $desc = " writes the quota size <quota> MiB on <folder> of <user>.";
-$desc .= "\n\t<quota> is an integer in MiB or 'none'";
+$desc .= "\n\t<quota> is an integer in MiB (or 'none' into a file batch)";
 $desc .= "\n\tThe folder MUST be a quotaroot, otherwise it becomes a new quotaroot!";
 $desc .= "\n\tProvide the following parameters:\n";
 
@@ -57,6 +57,7 @@ my ($opt, $usage) = describe_options(
   [],
   [ 'folder=s', 'the folder where to define the quota size (in combination with -u)' ],
   [ 'quota=i', 'the quota size in MiB (in combination with -u)' ],
+  [ 'noquota', 'remove the quota, if present. Override "quota" parameter (in combination with -u)' ],
   [],
   [ 'utf7', 'this optional flag let you to write folders utf7-imap encoded (in combination with --file)' ],
   [],
@@ -81,7 +82,10 @@ if ($opt->mode eq 'u') {
                 $folder[0] = $imaputf7->encode(encode($code,$opt->folder));
         }
         else { $folder[0] = 'INBOX'; }
-	if ( defined($opt->quota) ){
+	if ( $opt->noquota ) {
+		$quota[0] = 'none';
+	}
+	elsif ( defined($opt->quota) ){
 		$quota[0] = $opt->quota;
 	}
 	else {
@@ -136,7 +140,8 @@ if ( ($cyrus = cyrusconnect($logproc, $auth, $cyrus_server, $verbose)) == 0) {
 }
 
 for ($c=0;$c<$i;$c++) {
-		setQuota($logproc, $cyrus, $user[$c], $folder[$c], $quota[$c], $sep, $verbose)
-			or $exit++;
+	#print "\tWorking on account ${user[$c]} and folder ${folder[$c]}\n";
+	setQuota($logproc, $cyrus, $user[$c], $folder[$c], $quota[$c], $sep, $verbose)
+		or $exit++;
 }
 exit($exit);

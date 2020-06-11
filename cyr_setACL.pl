@@ -133,7 +133,7 @@ if ($opt->mode eq 'file') {
                 }
                 $i++;
         }
-        print "\nFound $i folders\n";
+        print "\nFound $i requests\n";
 }
 ## End of parameter handler
 
@@ -160,6 +160,7 @@ for ($c=0;$c<$i;$c++) {
 		$mboxfoldersname[0] = $folder[$c];
 	}
 	LOOP: for ($f=0;$f<=$#mboxfoldersname;$f++) {
+		print "\n\tWorking on: ${mailbox[$c]} and folder ${mboxfoldersname[$f]}\n";
 		$oldright = listACL($logproc, $cyrus, $mailbox[$c], $mboxfoldersname[$f], $who[$c], $sep, $v);
 		if ($oldright eq $right[$c]) {
 			$status='success';

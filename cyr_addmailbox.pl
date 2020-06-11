@@ -90,7 +90,7 @@ print($usage->text), exit 0 if $opt->help;
 if (not defined($opt->mode)) {
 	die("\nInsufficient arguments.\n\n".$usage->text);
 }
-my $cyrus_server = $opt->h;
+$cyrus_server = $opt->h;
 if ($opt->mode eq 'u') {
 	if ($opt->u  =~ /\Q$sep/) {
 		die("\nYou must specify a root mailbox in '-u'\n");
