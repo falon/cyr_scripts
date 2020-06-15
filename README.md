@@ -14,6 +14,7 @@ Unexpunge and undeleted folders from one place. Deprecated. I suggest the new [P
 A list of mailboxes per domain, with quota report, partitions and Last update timestamp.
 This program has compatibility problems reading metadata if runs with Cyrus::IMAP::Admin for Cyrus 3.0.x.
 The version of the Perl package is always 1.0.0, it's very difficult to implemente solutions version dependent.
+Anyway, this program is deprecated. I suggest [LDAP-IMAPExplorer](https://github.com/falon/LDAP-IMAPExplorer) to view the accounts.
 
 These tool are very customized to work with my environment. Each account is LDAP profiled with these attributes:
 
@@ -80,6 +81,112 @@ unixhierarchysep: 1
 admins: cyrusadmin
 ```
 
+saslauthd.conf of Cyrus IMAP host is
+```
+ldap_servers: ldap://ldap.example.com:389
+ldap_version:     3
+ldap_timeout:     10
+ldap_time_limit:  10
+ldap_search_base: <baseDN in cyr_scripts.ini>
+ldap_bind_dn:     uid=sasluser,o=admin.invalid,ou=People,<baseDN>
+ldap_password:    sasluser
+ldap_scope:       sub
+ldap_filter_mode: yes
+ldap_filter:      (&(uid=%u)(objectClass=mailRecipient)(|(mailUserStatus=active)(mailUserStatus=MBOXactive)))
+ldap_restart:     yes
+```
+
+Using Postfix, a good config can at least provides:
+```
+mydestination = ldap:/etc/postfix/ldap-localdomain.cf
+local_recipient_maps = ldap:/etc/postfix/ldap-localrecipient.cf
+virtual_alias_maps = ldap:/etc/postfix/ldap-aliases.cf
+smtpd_client_restrictions =
+                permit_mynetworks,
+                permit_sasl_authenticated,
+                reject
+
+smtpd_relay_restrictions =
+                permit_mynetworks,
+                permit_sasl_authenticated,
+                reject_unauth_destination
+
+smtpd_sender_restrictions =
+                reject_non_fqdn_sender,
+                reject_unknown_sender_domain,
+                reject_unlisted_sender
+
+smtpd_recipient_restrictions =
+                reject_non_fqdn_recipient,
+                reject_unknown_recipient_domain,
+                reject_unlisted_recipient,
+                permit
+
+smtpd_sasl_auth_enable = yes
+smtpd_tls_auth_only = yes
+smtp_tls_security_level = may
+```
+
+The saslauthd.conf Postfix host is
+```
+ldap_servers: ldap://ldap.example.com:389
+ldap_version:     3
+ldap_timeout:     10
+ldap_time_limit:  10
+ldap_search_base: <base DN in cyr_scripts.ini>
+ldap_bind_dn:     uid=sasluser,o=admin.invalid,<base DN>
+ldap_password:    sasluser
+ldap_scope:       sub
+ldap_uidattr:     uid
+ldap_filter_mode: yes
+ldap_filter:      (&(uid=%u)(objectClass=mailRecipient)(mailUserStatus=active))
+ldap_restart:     yes
+```
+
+/etc/postfix/ldap-localdomain.cf:
+```
+server_host =   ldap.example.com:389
+                ldap2.example.com:389
+timeout = 15
+search_base = <base DN in your cyr_scripts_ini>
+scope = one
+bind_dn = uid=postfixuser,o=admin.invalid,<base DN>
+bind_pw = password
+query_filter = (&(objectclass=domainrelatedobject)(associateddomain=%s))
+result_format  =  %s
+result_attribute = associateddomain
+```
+
+/etc/postfix/ldap-localrecipient:
+```
+server_host =   ldap.example.com:389
+                ldap2.example.com:389
+timeout = 15
+search_base = <base DN in your cyr_scripts_ini>
+scope = one
+bind_dn = uid=postfixuser,o=admin.invalid,<base DN>
+bind_pw = password
+query_filter = (&(|(mail=%s)(mailalternateaddress=%s))(|(mailuserstatus=active)(mailuserstatus=MBOXactive))(|(objectclass=mailrecipient)(objectclass=mailgroup)))
+result_format  =  %s
+result_attribute = mail
+```
+
+/etc/postfix/ldap-aliases.cf:
+```
+server_host =   ldap.example.com:389
+                ldap2.example.com:389
+timeout = 15
+search_base = <base DN in your cyr_scripts_ini>
+scope = one
+bind_dn = uid=postfixuser,o=admin.invalid,<base DN>
+bind_pw = password
+query_filter = (&(!(|(mail=.*)(mailalternateaddress=.*)))(|(mail=%s)(mailalternateaddress=%s))(|(objectclass=mailgroup)(&(objectclass=mailrecipient)(mailDeliveryOption=mailbox)(mailuserstatus=active))))
+result_attribute = mgrpRFC822mailmember
+special_result_attribute = uniquemember,memberURL
+terminal_result_attribute = uid,mailForwardingAddress
+result_format = %s
+```
+
 You could need to extend your LDAP schema with this *97csi-inetmailuser.ldif* file:
 
 ```
@@ -107,4 +214,3 @@ Above schema works in 389DS.
 
 
 Note: Cyrus::IMAP::Admin is Cyrus IMAP version dependent. Some issue could happen if you try to run these scripts to a Cyrus IMAP of different version.
-This poor documentation will be updated soon...
