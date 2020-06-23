@@ -7,6 +7,7 @@ our $build = '0.2.3 - 11 Jun 2020';
 ###################################
 
 
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 
 sub printLog {
   my ($sev,$mes,$verbose) = @_;
