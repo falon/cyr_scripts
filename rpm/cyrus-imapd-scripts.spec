@@ -4,9 +4,11 @@
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
 Version: 0.2.3
-Release: 0%{?dist}
+Release: 1%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
+Packager: Marco Favero <falon@ruparpiemonte.it>
+Vendor: Falon Entertainment
 URL: https://falon.github.io/%{upname}/
 Source0: https://github.com/falon/%{upname}/archive/master.zip
 BuildArch:	noarch
@@ -173,6 +175,8 @@ exit 0
 
 
 %changelog
+* Wed Jun 24 2020 Marco Favero <marco.favero@csi.it> 0.2.3-1
+- Removed a smartmatch warning
 * Thu Jun 11 2020 Marco Favero <marco.favero@csi.it> 0.2.3-0
 - New minor release, bug fixes, improved README.
 - getPart, fix in reading partition.
