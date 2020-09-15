@@ -72,7 +72,7 @@ my $ldapBindPwd = $cfg->val('ldap','pass');
 # Parameter handler
 my ($opt, $usage) = describe_options(
   '%c %o '.$desc,
-  [ 'h=s', 'the server to connect to', { required => 1} ],
+  [ 'h=s', 'the server to connect to (used to set the mailHost too, do not type "localhost", type the FQDN of the IMAP server)', { required => 1} ],
   [ "mode" =>
         hidden => {
                 one_of => [

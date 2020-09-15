@@ -175,6 +175,9 @@ exit 0
 
 
 %changelog
+* Tue Sep 15 2020 Marco Favero <marco.favero@csi.it> 0.2.3-2
+- Add a description hint about -h on cyr_adduser.
+- Minor change in getDomainPart.
 * Wed Jun 24 2020 Marco Favero <marco.favero@csi.it> 0.2.3-1
 - Removed a smartmatch warning
 * Thu Jun 11 2020 Marco Favero <marco.favero@csi.it> 0.2.3-0

@@ -769,11 +769,11 @@ sub getDomainPart {
 
 	# Read partition domain from Partition Manager metadata
 	my ($uid,$dom) = split('@',$user);
-	my $part_path = "/vendor/CSI/partition/$dom";
+	my $part_path = "/vendor/csi/partition/$dom";
 	if ( $cVer =~ /^3/ ) {
 		my @info = $cyrus->getinfo('',$part_path);
-		if ( $info[1]{private}{"/server/$part_path"} ne 'NIL' ) {
-			$part = $info[1]{private}{"/server/$part_path"};
+		if ( $info[1]{private}{"/server//private$part_path"} ne 'NIL' ) {
+			$part = $info[1]{private}{"/server//private$part_path"};
 		}
 	}
 	if ( $cVer =~ /^(v|)2/ ) {
