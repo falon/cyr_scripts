@@ -17,7 +17,7 @@ addons:
         apt:
                 update: true
                 sources:
-                        - sourceline: 'deb http://mirrors.kernel.org/ubuntu/ eoan main universe'
+                        - sourceline: 'deb http://mirrors.kernel.org/ubuntu/ focal main universe'
                 packages:
                         - sasl2-bin
                         - cyrus-imapd
