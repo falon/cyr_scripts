@@ -22,7 +22,7 @@ else
 	dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-${OS_VERSION}.noarch.rpm \
 	  sudo rpmdevtools git
 	dnf -y install 'dnf-command(config-manager)'
-	dnf config-manager --set-enabled PowerTools
+	dnf config-manager --set-enabled powertools
 	dnf -y module enable 389-ds:1.4
 fi
 
