@@ -176,6 +176,8 @@ exit 0
 
 %changelog
 * Wed Dec 23 2020 Marco Favero <marco.favero@csi.it> 0.2.4-1
+- Travis: updated URI for rpmforge el6 and el7.
+* Wed Dec 23 2020 Marco Favero <marco.favero@csi.it> 0.2.4-1
 - Travis: now PowerTools are lowercased!
 * Wed Dec 23 2020 Marco Favero <marco.favero@csi.it> 0.2.4-0
 - Fixed BUG in cyr_setPartitionAnno.pl
