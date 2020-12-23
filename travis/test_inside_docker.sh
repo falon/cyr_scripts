@@ -16,7 +16,6 @@ echo -en "\n\n \e[48;5;17;97m INSTALL REPOs AND MAIN SYSTEM REQUIREMENTS\e[0m\n\
 if [ "${OS_VERSION}" -ne "8" ]; then
 	yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-${OS_VERSION}.noarch.rpm \
 	  http://ftp.tu-chemnitz.de/pub/linux/dag/redhat/el${OS_VERSION}/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el${OS_VERSION}.rf.x86_64.rpm \
-	  http://repository.it4i.cz/mirrors/repoforge/redhat/el${OS_VERSION}/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el${OS_VERSION}.rf.x86_64.rpm \
 	  yum-plugin-priorities rpm-build git tar gzip autotools sudo rpmdevtools
 else
 	dnf install langpacks-en glibc-all-langpacks -y
