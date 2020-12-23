@@ -117,8 +117,6 @@ sub Running {
 }
 
 	
-openlog($mainproc,'pid','LOG_MAIL');
-
 ######################################################
 #####                DAEMON                      #####
 ######################################################
@@ -129,6 +127,7 @@ if ($opt_d) {
 
         # If already running, then exit
 	if (Running($argdaemon{work_dir}.'/'.$argdaemon{pid_file})) {
+		openlog($mainproc,'pid','LOG_MAIL');
 		printLog('LOG_EMERG',"action=start algo=$algo status=fail error=\"can't start\" detail=\"Can't start process. A process is already running or stalled with pid file ".$argdaemon{pid_file}.'"',$debug);
 		exit(-1);
 	}
@@ -146,6 +145,7 @@ if ($opt_d) {
 		Proc::Daemon::Kill_Daemon($argdaemon{work_dir}.'/'.$argdaemon{pid_file} );
                 unlink $argdaemon{work_dir}.'/'.$argdaemon{pid_file} or
 			printLog('LOG_EMERG',"action=stop algo=$algo status=fail error=\"can't stop\" detail=\"Can't remove ".$argdaemon{pid_file}.'"',$debug);
+		closelog();
         };
 
         $SIG{HUP}  = sub {
@@ -161,8 +161,11 @@ if ($opt_d) {
                                 printLog('LOG_INFO',"action=reload algo=$algo status=success detail=\"Caught SIGHUP:  reloading\"",$debug);
                         }
                 }
+		closelog();
         };
+	openlog($mainproc,'pid','LOG_MAIL');
         printLog('LOG_INFO',"action=start algo=$algo status=success detail=\"Starting process\"",$debug);
+	closelog();
 }
 
 
@@ -206,6 +209,7 @@ while ($continue) {
 		$_[5] =~ s/\/.*$//;
 		$_[4] =~ s/\%$//;
 		if (!defined(is_domain($_[5], \%optDom))) {
+			openlog($mainproc,'pid','LOG_MAIL');
 			die (printLog('LOG_EMERG',"action=check algo=$algo domain=$_[5] partition=$_[0] status=fail error=\"invalid domain\" detail=\"EXIT: <$_[5]> domain of partition <$_[0]> is invalid. Please check this path\"",$debug));
 		}
 
@@ -213,13 +217,13 @@ while ($continue) {
 			case ( 'rr' )   { &roundrobin($mainproc, $partition,$_[5],$_[3],$_[4],$_[0],$th); }
 			case ( 'free' ) { &morespace($pfree,$_[5],$_[3],$_[4],$_[0]); }
 			else {
+				openlog($mainproc,'pid','LOG_MAIL');
 				die (printLog('LOG_EMERG',"action=check algo=$algo status=fail error=\"invalid algo\" detail=\"EXIT: Select an existent algorithm, not <$algo>!\"",$debug));
 			}
 		}
 	
 	}
 
-	closelog();
 	if ( $algo eq 'free' ) {
 		while (  ($dom, $ppt) = each(%$pfree) ) {
 			$partition->{$dom}->{$pfree->{$dom}->{'part'}}->{'avail'} = $pfree->{$dom}->{'avail'};

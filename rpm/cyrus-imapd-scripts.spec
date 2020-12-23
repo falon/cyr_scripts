@@ -3,8 +3,8 @@
 
 Summary: An extra collection of cyrus-imapd utilities.
 Name: cyrus-imapd-scripts
-Version: 0.2.3
-Release: 2%{?dist}
+Version: 0.2.4
+Release: 0%{?dist}
 Group: System Environment/Base
 License: Apache-2.0
 Packager: Marco Favero <falon@ruparpiemonte.it>
@@ -175,6 +175,8 @@ exit 0
 
 
 %changelog
+* Wed Dec 23 2020 Marco Favero <marco.favero@csi.it> 0.2.4-0
+- Fixed BUG in cyr_setPartitionAnno.pl
 * Tue Sep 15 2020 Marco Favero <marco.favero@csi.it> 0.2.3-2
 - Add a description hint about -h on cyr_adduser.
 - Minor change in getDomainPart.
